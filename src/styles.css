@@ -852,12 +852,17 @@ button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent)
    基础样式 = 纵排（.layout-stack）：同级文件夹一条条往下堆。
    ------------------------------------------------------------------ */
 
-/* 并排：同级文件夹横向铺开成多列，不再占用整行高度 */
+/* 并排：同级文件夹横向铺开成多栏，紧密填充（矮文件夹下面立刻接下一个，不留大片空白）。
+   用原生多栏而不是 grid：grid 的行高按该行最高的文件夹对齐，矮的下面会留一块空白。
+   --folder-cols 由 App.vue 按"自动 / 固定列数"注入；默认给列宽 = 按宽度自动分栏。 */
 .app.layout-columns .cascade-children {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 10px 16px;
-  align-items: start;
+  columns: var(--folder-cols, 300px);
+  column-gap: 16px;
+}
+/* 一个文件夹不被拆到两栏；栏内文件夹之间留出间距 */
+.app.layout-columns .cascade-node {
+  break-inside: avoid;
+  margin-bottom: 10px;
 }
 /* 文件夹变窄后，栏内网址若仍按 176px 起算就只剩 1 列（又变成竖着排）；
    这里把最小列宽收窄，保证每个文件夹里网址依旧是并排的 */
