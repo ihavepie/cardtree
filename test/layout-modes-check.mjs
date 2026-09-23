@@ -152,31 +152,65 @@ try {
     })()`);
   }
 
-  // 顶栏按钮循环 + 提示
-  const cycle = [];
-  for (let i = 0; i < 2; i++) {
-    cycle.push(await ev(`(async () => {
-      const btn = [...document.querySelectorAll('.header-actions .icon-btn')].find(b => (b.title || '').startsWith('文件夹'));
-      if (!btn) return { err: '顶栏文件夹排列按钮不存在' };
-      const before = window.__store.layoutMode, titleBefore = btn.title;
-      btn.click();
-      await new Promise(r => setTimeout(r, 250));
-      return { before, after: window.__store.layoutMode, titleBefore, titleAfter: btn.title, toast: window.__store.toast?.msg || null };
-    })()`));
-  }
-  report.topbarCycle = cycle;
+  // 顶栏选项面板：打开菜单 → 依次选各档 → 量文件夹栏数
+  const openMenuProbe = `(async () => {
+    const btn = [...document.querySelectorAll('.header-actions .icon-btn')].find(b => (b.title || '').startsWith('文件夹排列'));
+    if (!btn) return { err: '找不到布局按钮' };
+    btn.click();
+    await new Promise(r => setTimeout(r, 250));
+    const menu = document.querySelector('.context-menu');
+    return {
+      title: btn.title,
+      items: menu ? [...menu.querySelectorAll('.context-menu-item')].map(i => i.textContent.trim()) : null,
+    };
+  })()`;
 
-  // 持久化：切到并排 → 重载 → 是否记住
-  await ev(`(async () => { window.__store.layoutMode = 'columns'; await new Promise(r => setTimeout(r, 400)); return true })()`);
+  const countFolders = `(() => {
+    const nodes = [...document.querySelectorAll('.root-card > .cascade-children > .cascade-node')];
+    const lefts = [...new Set(nodes.map(n => Math.round(n.getBoundingClientRect().left)))].sort((a,b) => a-b);
+    return { folders: nodes.length, columns: lefts.length, lefts };
+  })()`;
+
+  report.menu = await ev(openMenuProbe);
+  await ev(`document.querySelector('.context-menu') && document.body.click()`);
+  await sleep(200);
+
+  report.presets = {};
+  for (const pick of ['文件夹并排 · 2 列', '文件夹并排 · 3 列', '文件夹并排 · 4 列', '文件夹纵排（一条条往下堆）']) {
+    await ev(`(async () => {
+      const btn = [...document.querySelectorAll('.header-actions .icon-btn')].find(b => (b.title || '').startsWith('文件夹排列'));
+      btn.click();
+      await new Promise(r => setTimeout(r, 200));
+      const it = [...document.querySelectorAll('.context-menu-item')].find(i => i.textContent.trim().replace('✓ ', '').replace('　', '').includes(${JSON.stringify(pick)}));
+      if (!it) return { err: '菜单项不存在: ' + ${JSON.stringify(pick)} };
+      it.click();
+      await new Promise(r => setTimeout(r, 400));
+      return true;
+    })()`);
+    await sleep(500);
+    report.presets[pick] = {
+      ...(await ev(countFolders)),
+      layoutMode: await ev(`window.__store.layoutMode`),
+      folderCols: await ev(`window.__store.folderCols`),
+      cssVar: await ev(`getComputedStyle(document.querySelector('.app')).getPropertyValue('--folder-cols').trim()`),
+    };
+  }
+
+  // 持久化：选「并排 · 3 列」→ 重载 → 是否记住
+  await ev(`(async () => {
+    window.__store.layoutMode = 'columns'; window.__store.folderCols = 3;
+    await new Promise(r => setTimeout(r, 400)); return true
+  })()`);
   await sleep(300);
-  const stored = await ev(`localStorage.getItem('cardtree:layoutMode')`);
+  const stored = await ev(`[localStorage.getItem('cardtree:layoutMode'), localStorage.getItem('cardtree:folderCols')]`);
   await send('Page.reload');
   await waitReady();
   await sleep(800);
   report.persistence = {
     writtenToStorage: stored,
-    afterReload: await ev(`window.__store.layoutMode`),
+    afterReload: [await ev(`window.__store.layoutMode`), await ev(`window.__store.folderCols`)],
     appClass: await ev(`document.querySelector('.app').className`),
+    cssVar: await ev(`getComputedStyle(document.querySelector('.app')).getPropertyValue('--folder-cols').trim()`),
   };
 
   console.log(JSON.stringify(report, null, 2));
