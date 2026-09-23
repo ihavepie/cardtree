@@ -9,6 +9,8 @@
 
 - 🏠 **新标签页即桌面**：`chrome_url_overrides.newtab`，打开新标签页直接进入
 - 🗂️ **卡片树级联布局**：以「书签栏」为唯一顶层（其他书签/移动设备书签的内容自动平铺进书签栏），子文件夹以「标题 + 树线」扁平嵌套（**首次默认折叠**、点开才展开），仅最外层为毛玻璃面板、内层不叠卡片，亚克力通透
+- 🧱 **文件夹排列可切换**：顶栏布局按钮打开选项面板，可切「文件夹纵排（一条条往下堆）」或「文件夹并排（自动列数 / 2 / 3 / 4 列）」；网址（书签）始终保持横排并排，选择持久化
+- 📐 **前 N 个 + 展开全部**：每个文件夹的直接书签默认只显示前 8 个，其余收成一条「展开全部 N 个」，卡片高度基本恒定；展开状态按文件夹记住
 - 🔽 **一键折叠/展开**：顶栏按钮一键折叠或展开所有子文件夹
 - 🧭 **侧边栏文件夹树**：左侧可折叠的文件夹导航，**单击 = 选中 + 定位 + 展开/收缩**（三合一）、**点箭头单独展开/收缩**（与主区卡片双向同步）；右键文件夹可收缩/展开、新建书签/子文件夹、重命名、移动、删除整个文件夹；支持把主区书签/文件夹**拖入侧边栏文件夹**完成移动（顶栏 ☰ 可收起侧边栏）
 - 🎨 **自定义背景**：内置多套渐变/壁纸预设 + 本地上传图片 + 一键随机切换，持久化保存
@@ -46,10 +48,16 @@
 ## 🧪 测试
 
 ```bash
-node test/cdp-driver.mjs   # 需本机装有 Microsoft Edge
+python3 -m http.server 5199 --directory dist &   # 三个脚本都从 5199 取页面
+
+node test/cdp-driver.mjs           # 交互回归：渲染/折叠/拖拽排序/拖入文件夹/嵌套/拖回书签栏/右键/搜索/新建/回收站
+node test/layout-modes-check.mjs   # 文件夹排列：纵排 / 并排自动 / 固定 2·3·4 列的栏数与列轨道、拖拽指示线、持久化
+node test/grid-preview-check.mjs   # 前 N 个 + 展开全部：8→16→8、按钮文案、持久化、拖拽落点
+node test/shot-home.mjs 前缀 1440 940  # 视觉截图（浅色/展开/深色/悬停/拖拽指示线）
 ```
 
-自启动无头 Edge，驱动页面跑：渲染 / 折叠展开 / 拖拽排序 / 拖入文件夹 / 文件夹嵌套 / 拖回书签栏 / 右键菜单 / 搜索 / 新建 / 删除回收站恢复，截图存于 `test/screens/`。
+脚本自启动无头 Edge（路径按 `/Applications` 与外置卷自动探测，可用 `EDGE_BIN=...` 覆盖），截图存于 `test/screens/`。
+`cdp-driver` 的 `T6` 带一条断言：**拖拽/排序后若「其他书签 / 移动设备书签」的条目出现在书签栏，即判定失败**（历史上曾因平铺数据被回写而导致真实书签被搬走）。
 
 ## 📁 文件结构
 
@@ -63,8 +71,8 @@ cardtree/
 │   └── icons/                 # 插件图标 16/48/128
 ├── src/
 │   ├── main.js                # 入口：挂载 App + 初始化 store + 拖拽全局监听
-│   ├── App.vue                # 顶层布局（顶栏/分区/搜索/全局指示线/弹层）
-│   ├── styles.css             # 浅色玻璃拟态主题 + 全部组件样式
+│   ├── App.vue                # 顶层布局（顶栏/分区/搜索/全局指示线/弹层）+ 布局模式类与 CSS 变量
+│   ├── styles.css             # 浅色玻璃拟态主题 + 全部组件样式 + 文件夹排列模式
 │   ├── bookmarks.js           # chrome.bookmarks 封装 + mock 实现（?mock 自动切换）
 │   ├── store.js               # 响应式 store：树/折叠/选中/回收站/最近/移动/搜索/持久化
 │   ├── drag.js                # 拖拽控制器：inside/before/after 解析、幽灵、指示线、自动展开
@@ -76,7 +84,7 @@ cardtree/
 │       ├── SidebarFolder.vue  # 侧边栏递归文件夹项
 │       ├── SearchResults.vue
 │       ├── RecentSection.vue
-│       ├── BookmarkGrid.vue
+│       ├── BookmarkGrid.vue   # 书签网格（横排并排 + 前 N 个/展开全部）
 │       ├── BookmarkItem.vue   # 单个书签卡片（选中/拖拽/右键）
 │       ├── CascadeNode.vue    # 文件夹卡片节点（递归，折叠动画）
 │       ├── ContextMenu.vue
@@ -84,7 +92,10 @@ cardtree/
 │       └── TrashPanel.vue     # 回收站侧栏
 ├── tools/gen_icons.py         # 图标生成脚本
 └── test/
-    ├── cdp-driver.mjs         # CDP 交互测试
+    ├── cdp-driver.mjs         # CDP 交互回归（含数据完整性断言）
+    ├── layout-modes-check.mjs # 文件夹排列模式校验
+    ├── grid-preview-check.mjs # 前 N 个 + 展开全部校验
+    ├── shot-home.mjs          # 视觉截图
     └── screens/               # 测试截图
 ```
 
