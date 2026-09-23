@@ -85,9 +85,18 @@ try {
   const folderEl = (name) => `[...document.querySelectorAll('.cascade-node')].find(n => n.querySelector('.cascade-title')?.textContent.includes('${name}'))`;
   const folderCard = (name) => `${folderEl(name)}.querySelector('.cascade-card')`;
   const folderHead = (name) => `${folderEl(name)}.querySelector('.cascade-heading')`;
-  const rootCard = (name) => `[...document.querySelectorAll('.root-section')].find(s => s.querySelector('.section-label')?.textContent.includes('${name}')).querySelector('.root-card')`;
+  // 根卡片：load() 会把「其他书签/移动设备书签」平铺进书签栏，所以主区只有一个 .root-section
+  const rootCard = () => `document.querySelector('.root-section .root-card')`;
   const barBookmarks = `(async () => { const roots = await window.__bm.getRoots(); const bar = roots.find(r => r.title === '书签栏'); return bar.children.filter(c => c.url).map(c => c.title); })()`;
   const barAll = `(async () => { const roots = await window.__bm.getRoots(); const bar = roots.find(r => r.title === '书签栏'); return bar.children.map(c => c.title); })()`;
+  // 「其他书签 / 移动设备书签」里的真实内容（含嵌套）—— 用来断言它们没被搬进书签栏
+  const otherBookmarks = `(async () => {
+    const roots = await window.__bm.getRoots();
+    const out = [];
+    const walk = (n) => { if (n.url) out.push(n.title); (n.children || []).forEach(walk) };
+    for (const r of roots) { if ((r.title || '').includes('书签栏')) continue; (r.children || []).forEach(walk) }
+    return out;
+  })()`;
 
   // 通用拖拽：mode 内联为字符串字面量
   function dragExpr(srcExpr, dstExpr, mode = 'inside') {
@@ -127,8 +136,8 @@ try {
       sections: document.querySelectorAll('.root-section').length,
       bookmarks: document.querySelectorAll('.bookmark-item').length,
       folders: document.querySelectorAll('.cascade-node').length,
-      hasBookmarkBar: [...document.querySelectorAll('.section-label')].some(e => e.textContent.includes('书签栏')),
-      hasOther: [...document.querySelectorAll('.section-label')].some(e => e.textContent.includes('其他书签')),
+      hasBookmarkBar: [...document.querySelectorAll('.sf-name')].some(e => e.textContent.includes('书签栏')),
+      sidebarFolders: [...document.querySelectorAll('.sf-name')].map(e => e.textContent.trim()),
       hasDev: ${folderEl('前端开发')} != null,
       barOrder: await ${barBookmarks},
     }))()`);
@@ -171,11 +180,17 @@ try {
   });
 
   // T6 拖回书签栏：GitHub 从常用工具拖回书签栏根卡片
+  // 同时断言：拖拽/排序不得把「其他书签 / 移动设备书签」的条目搬进书签栏（历史数据事故的回归防线）
   await run('T6_drag_back_out', async () => {
-    await ev(dragExpr(bmEl('GitHub'), rootCard('书签栏'), 'inside'));
+    await ev(dragExpr(bmEl('GitHub'), rootCard(), 'inside'));
     const bar = await ev(barBookmarks);
+    const other = await ev(otherBookmarks);
+    const foreignInBar = bar.filter((t) => other.includes(t));
     await shot('02-drag.png');
-    return { barBookmarks: bar };
+    if (foreignInBar.length) {
+      throw new Error('其他收藏夹的条目被搬进了书签栏 → ' + foreignInBar.join('、'));
+    }
+    return { barBookmarks: bar, otherStillInPlace: other };
   });
 
   // T7 右键菜单

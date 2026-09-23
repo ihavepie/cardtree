@@ -114,6 +114,18 @@ function rebuildIndex() {
 export async function load() {
   try {
     const roots = await bm.getRoots()
+    // 记录每个节点在真实书签树里的父级。
+    // load() 会把「其他书签 / 移动设备书签」的内容平铺进书签栏（只为显示），
+    // 于是 rebuildIndex 会把它们的 parentId 也改写成书签栏；realParentId 保留真实归属，
+    // 供 moveTo() 判断「谁真的属于这个文件夹」，否则一次排序就会把别的收藏夹条目搬进书签栏。
+    const tagRealParents = (nodes, parentId) => {
+      for (const n of nodes || []) {
+        n.realParentId = parentId
+        tagRealParents(n.children, n.id)
+      }
+    }
+    tagRealParents(roots, null)
+
     // 只保留「书签栏」作为顶层；其他书签/移动设备书签的内容平铺进书签栏
     const bar = roots.find((r) => (r.title || '').includes('书签栏'))
     if (bar) {
@@ -143,6 +155,17 @@ export function nodeById(id) {
 export function childrenIds(id) {
   const n = nodeById(id)
   return n && n.children ? n.children.map((c) => c.id) : []
+}
+
+/**
+ * 真实归属该文件夹的子节点 id（排除为显示而平铺进来的其他收藏夹条目）。
+ * 排序 / 落点计算必须用它，否则 applyOrder 会把平铺进来的条目也搬到该文件夹里。
+ */
+export function realChildrenIds(id) {
+  return childrenIds(id).filter((cid) => {
+    const n = nodeById(cid)
+    return !n || n.realParentId === undefined || n.realParentId === id
+  })
 }
 
 // ---------------------------------------------------------------- 书签元数据（描述/标签）
@@ -450,13 +473,18 @@ export async function renameNode(id, title, url) {
 export async function moveTo(ids, parentId, index) {
   if (!ids.length || !parentId) return
   const set = new Set(ids)
-  const current = childrenIds(parentId)
+  // 只用「真实属于该文件夹」的节点算顺序：平铺进来的其他收藏夹条目不能被回写，
+  // 否则 applyOrder 会真的把它们搬进这个文件夹（数据事故）。
+  const current = realChildrenIds(parentId)
   const existing = current.filter((id) => !set.has(id))
   const idx = clamp(index ?? existing.length, 0, existing.length)
 
   for (const id of ids) {
     const node = nodeById(id)
-    if (node && node.parentId !== parentId) await bm.move(id, { parentId })
+    if (!node) continue
+    // 按真实归属判断是否需要真的移动：拖到书签栏根卡片时，平铺条目会真正归入书签栏
+    const realParent = node.realParentId === undefined ? node.parentId : node.realParentId
+    if (realParent !== parentId) await bm.move(id, { parentId })
   }
   const full = [...existing.slice(0, idx), ...ids, ...existing.slice(idx)]
   await bm.applyOrder(parentId, full)

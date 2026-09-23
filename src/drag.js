@@ -4,7 +4,7 @@
 //   before / after —— 在兄弟序列中前插 / 后插（全局插入指示线）
 // 全部通过 store.dragging / dropTarget / dropLine 驱动 UI。
 
-import { store, nodeById, childrenIds, isDescendant, moveTo } from './store.js'
+import { store, nodeById, realChildrenIds, isDescendant, moveTo } from './store.js'
 import { isFolder } from './utils.js'
 
 const DRAG_TYPE = 'application/x-cardtree'
@@ -214,7 +214,7 @@ async function performDrop() {
       const parentId = t.parentId
       if (!parentId) return endDrag()
       const set = new Set(d.ids)
-      const existing = childrenIds(parentId).filter((id) => !set.has(id))
+      const existing = realChildrenIds(parentId).filter((id) => !set.has(id))
       let idx
       if (t.refId == null) {
         idx = existing.length
