@@ -805,11 +805,13 @@ button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent)
 
 
 
-/* ============================== 书签网格（扁平 chip） ============================== */
+/* ============================== 书签网格（扁平 chip · 横排并排） ==============================
+   密度：只把每列的宽度下限收窄，芯片本身（字号/内边距/favicon）一律不动。
+   例：1440 宽（卡片内 1102px）每行从 6 列变 7 列，同样屏高能多看到一个书签。 */
 .bookmark-grid {
   display: grid;
   /* 书签并排：按可用宽度自动分列，不再一条一条占满整行 */
-  grid-template-columns: repeat(auto-fill, minmax(176px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(152px, 1fr));
   gap: 3px;
   min-height: 24px;
   padding-bottom: 8px;
@@ -864,10 +866,10 @@ button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent)
   break-inside: avoid;
   margin-bottom: 10px;
 }
-/* 文件夹变窄后，栏内网址若仍按 176px 起算就只剩 1 列（又变成竖着排）；
-   这里把最小列宽收窄，保证每个文件夹里网址依旧是并排的 */
+/* 文件夹变窄后，栏内网址若仍按 152px 起算就只剩 1 列（又变成竖着排）；
+   这里把最小列宽再收窄，保证每个文件夹里网址依旧是并排的 */
 .app.layout-columns .bookmark-grid {
-  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
 }
 /* 并排后不再需要纵向树线（它是给"一条条往下"的层级看的） */
 .app.layout-columns .cascade-node > .cascade-card > .cascade-body {

@@ -50,8 +50,13 @@ const PROBE = `(() => {
     const rects = items.map(e => e.getBoundingClientRect());
     const xs = [...new Set(rects.map(r => Math.round(r.left)))].sort((a,b) => a-b);
     const ys = [...new Set(rects.map(r => Math.round(r.top)))].sort((a,b) => a-b);
+    const node = grid.closest('.cascade-node');
+    const tracks = getComputedStyle(grid).gridTemplateColumns.split(' ').length;
     return {
+      folder: node ? (node.querySelector('.cascade-title-text')?.textContent || '?') : '(根卡片)',
+      width: Math.round(grid.getBoundingClientRect().width),
       items: items.length,
+      tracks,
       columns: xs.length,
       rows: ys.length,
       rowMajor: items.length > 1 ? Math.round(rects[0].top) === Math.round(rects[1].top) : null,
