@@ -62,7 +62,7 @@ export const store = reactive({
   bgPanelOpen: false,      // 背景设置面板
   customBackgrounds: [],   // 自定义背景栏位：[{id, name, type:'image'|'color'|'gradient', ...}]
   theme: 'light',          // 主题：light | dark
-  layoutMode: 'row',       // 书签布局：single 单列 | row 横排多列 | col 纵排多列（列数按宽度自动）
+  layoutMode: 'stack',     // 文件夹排列：stack 一条条往下堆 | columns 横向并排铺开（网址始终横排并排）
   nodeMeta: {},            // 书签元数据：{ [bookmarkId]: { desc: string, tags: string[] } }
   nodeStats: {},           // 书签访问统计：{ [bookmarkId]: { count: number, lastOpenedAt: number } }
 
@@ -679,11 +679,11 @@ export function toggleTheme() {
   store.theme = store.theme === 'light' ? 'dark' : 'light'
 }
 
-// —— 书签布局模式：单列 / 横排多列 / 纵排多列（顶栏按钮循环切换，选择存 chrome.storage）——
+// —— 文件夹排列模式（顶栏按钮切换，选择存 chrome.storage）——
+// 只管「文件夹」怎么排：一条条往下堆 / 横向并排铺开。网址（书签）始终保持横排并排。
 export const LAYOUT_MODES = [
-  { key: 'single', label: '单列' },
-  { key: 'row', label: '横排多列' },
-  { key: 'col', label: '纵排多列' },
+  { key: 'stack', label: '纵排' },
+  { key: 'columns', label: '并排' },
 ]
 
 export function isLayoutMode(mode) {
@@ -734,7 +734,7 @@ export async function init() {
       storageGet('memos', []),
       storageGet('memoState', null),
       storageGet('memoStrokes', []),
-      storageGet('layoutMode', 'row'),
+      storageGet('layoutMode', 'stack'),
     ])
     const toArray = (v) => {
       if (Array.isArray(v)) return v
@@ -747,7 +747,7 @@ export async function init() {
     store.trash = toArray(t)
     store.bg = bg || null
     store.theme = theme === 'dark' ? 'dark' : 'light'
-    store.layoutMode = isLayoutMode(layoutMode) ? layoutMode : 'row'
+    store.layoutMode = isLayoutMode(layoutMode) ? layoutMode : 'stack'
     // 只保留图片/视频背景，过滤掉旧的纯色/渐变/动态类型
     store.customBackgrounds = toArray(customBackgrounds).filter((b) => b.type === 'image' || b.type === 'video')
     // 若当前背景指向已移除的类型，则回到默认

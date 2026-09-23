@@ -1,4 +1,4 @@
-/* 布局切换校验：单列 / 横排多列 / 纵排多列 —— 实际列数、填充方向、拖拽指示线、持久化
+/* 文件夹排列校验：纵排 / 并排 —— 文件夹列数、网址是否始终横排、拖拽指示线、持久化
    用法：需先有静态服务器 python3 -m http.server 5199 --directory dist
    然后：node test/layout-modes-check.mjs */
 import { writeFileSync, mkdirSync, mkdtempSync, rmSync, existsSync } from 'node:fs';
@@ -34,6 +34,43 @@ async function waitHttp(url, timeoutMs = 15000) {
   }
   throw new Error('CDP 未就绪: ' + url);
 }
+
+// 页面内测量：文件夹列数 / 网址列数 / 填充方向
+const PROBE = `(() => {
+  const rootCard = document.querySelector('.root-card');
+  // 顶层文件夹（根卡片里直接那一层 cascade-node）
+  const topFolders = [...rootCard.querySelectorAll(':scope > .cascade-children > .cascade-node')];
+  const fx = [...new Set(topFolders.map(n => Math.round(n.getBoundingClientRect().left)))].sort((a,b) => a-b);
+  const fy = [...new Set(topFolders.map(n => Math.round(n.getBoundingClientRect().top)))].sort((a,b) => a-b);
+
+  // 网址（书签条）：根卡片里第一个网格 + 第一个文件夹内部的网格
+  const measureGrid = (grid) => {
+    if (!grid) return null;
+    const items = [...grid.querySelectorAll('.bookmark-item')];
+    const rects = items.map(e => e.getBoundingClientRect());
+    const xs = [...new Set(rects.map(r => Math.round(r.left)))].sort((a,b) => a-b);
+    const ys = [...new Set(rects.map(r => Math.round(r.top)))].sort((a,b) => a-b);
+    return {
+      items: items.length,
+      columns: xs.length,
+      rows: ys.length,
+      rowMajor: items.length > 1 ? Math.round(rects[0].top) === Math.round(rects[1].top) : null,
+      css: getComputedStyle(grid).gridTemplateColumns,
+    };
+  };
+  const grid = rootCard.querySelector('.bookmark-grid');
+  const insideFolderGrid = rootCard.querySelector('.cascade-node .bookmark-grid');
+
+  return {
+    folderCount: topFolders.length,
+    folderColumns: fx.length,
+    folderRows: fy.length,
+    folderLefts: fx.map(x => Math.round(x)),
+    folderOrderIsRowMajor: topFolders.length > 1 ? Math.round(topFolders[0].getBoundingClientRect().top) === Math.round(topFolders[1].getBoundingClientRect().top) : null,
+    rootGrid: measureGrid(grid),
+    insideFolderGrid: measureGrid(insideFolderGrid),
+  };
+})()`;
 
 let ws;
 try {
@@ -77,46 +114,30 @@ try {
   await waitReady();
   await sleep(1500);
 
-  // 一、三档布局：实际列数 / 行数 / 填充方向 / 拖拽指示线
   const report = {};
-  for (const mode of ['single', 'row', 'col']) {
+  for (const mode of ['stack', 'columns']) {
     await ev(`(async () => {
       window.__store.layoutMode = '${mode}';
-      window.__store.selection.clear(); // 清选中，避免详情抽屉挡住右侧
-      await new Promise(r => setTimeout(r, 500));
+      window.__store.selection.clear();           // 清选中，避免详情抽屉挡住右侧
+      document.querySelectorAll('.cascade-node.is-collapsed > .cascade-card .cascade-toggle').forEach(b => b.click());
+      await new Promise(r => setTimeout(r, 600));
       return true
     })()`);
-    await sleep(600);
-    report[mode] = await ev(`(() => {
-      const grid = document.querySelector('.bookmark-grid');
-      const items = [...grid.querySelectorAll('.bookmark-item')];
-      const rects = items.map(e => e.getBoundingClientRect());
-      const xs = [...new Set(rects.map(r => Math.round(r.left)))].sort((a,b) => a-b);
-      const ys = [...new Set(rects.map(r => Math.round(r.top)))].sort((a,b) => a-b);
-      const cs = getComputedStyle(grid);
-      return {
-        items: items.length,
-        gridTemplateColumns: cs.gridTemplateColumns,
-        columnCount: cs.columnCount,
-        display: cs.display,
-        visualColumns: xs.length,
-        visualRows: ys.length,
-        // 填充方向：前两项同列 = 纵向(列优先)；同排不同列 = 横向(行优先)
-        firstTwoShareColumn: Math.round(rects[0].left) === Math.round(rects[1].left),
-        firstTwoShareRow: Math.round(rects[0].top) === Math.round(rects[1].top),
-      };
-    })()`);
+    await sleep(800);
+    report[mode] = await ev(PROBE);
     await shot(mode);
 
-    // 拖拽指示线取向（横排应为竖线 v，单列/纵排应为横线 h）
-    const line = await ev(`(async () => {
-      const items = [...document.querySelectorAll('.bookmark-item')];
-      const t = (e) => e.querySelector('.bookmark-title')?.textContent;
-      const src = items[0], dst = items[1];
+    // 同级文件夹之间拖拽：指示线取向（并排应为竖线 v，纵排应为横线 h）
+    report[mode].folderDropLine = await ev(`(async () => {
+      const nodes = [...document.querySelectorAll('.root-card > .cascade-children > .cascade-node')];
+      if (nodes.length < 2) return null;
+      const src = nodes[0].querySelector('.cascade-heading');
+      const dstNode = nodes[1];
+      const dst = dstNode.querySelector('.cascade-heading');
       const r = dst.getBoundingClientRect();
       const dt = new DataTransfer();
       src.dispatchEvent(new DragEvent('dragstart', { bubbles: true, cancelable: true, dataTransfer: dt }));
-      dst.dispatchEvent(new DragEvent('dragover', { bubbles: true, cancelable: true, dataTransfer: dt, clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 }));
+      dst.dispatchEvent(new DragEvent('dragover', { bubbles: true, cancelable: true, dataTransfer: dt, clientX: r.left + 4, clientY: r.top + r.height / 2 }));
       await new Promise(r => setTimeout(r, 200));
       const el = document.querySelector('.drop-line');
       const out = el ? { cls: el.className, w: Math.round(el.getBoundingClientRect().width), h: Math.round(el.getBoundingClientRect().height) } : null;
@@ -124,15 +145,14 @@ try {
       await new Promise(r => setTimeout(r, 200));
       return out;
     })()`);
-    report[mode].dropLine = line;
   }
 
-  // 二、顶栏按钮：点击循环一档并给出提示
+  // 顶栏按钮循环 + 提示
   const cycle = [];
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 2; i++) {
     cycle.push(await ev(`(async () => {
-      const btn = [...document.querySelectorAll('.header-actions .icon-btn')].find(b => (b.title || '').startsWith('布局'));
-      if (!btn) return { err: '顶栏布局按钮不存在' };
+      const btn = [...document.querySelectorAll('.header-actions .icon-btn')].find(b => (b.title || '').startsWith('文件夹'));
+      if (!btn) return { err: '顶栏文件夹排列按钮不存在' };
       const before = window.__store.layoutMode, titleBefore = btn.title;
       btn.click();
       await new Promise(r => setTimeout(r, 250));
@@ -141,8 +161,8 @@ try {
   }
   report.topbarCycle = cycle;
 
-  // 三、持久化：切到纵排 → 重新加载页面 → 是否记住
-  await ev(`(async () => { window.__store.layoutMode = 'col'; await new Promise(r => setTimeout(r, 400)); return true })()`);
+  // 持久化：切到并排 → 重载 → 是否记住
+  await ev(`(async () => { window.__store.layoutMode = 'columns'; await new Promise(r => setTimeout(r, 400)); return true })()`);
   await sleep(300);
   const stored = await ev(`localStorage.getItem('cardtree:layoutMode')`);
   await send('Page.reload');

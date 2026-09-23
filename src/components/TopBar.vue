@@ -9,11 +9,11 @@ const allCollapsed = computed(() => isAllCollapsed())
 const layoutIndex = computed(() => Math.max(0, LAYOUT_MODES.findIndex((m) => m.key === store.layoutMode)))
 const layoutLabel = computed(() => LAYOUT_MODES[layoutIndex.value].label)
 const nextLayoutLabel = computed(() => LAYOUT_MODES[(layoutIndex.value + 1) % LAYOUT_MODES.length].label)
-const layoutTitle = computed(() => `布局：${layoutLabel.value}（点击切换为${nextLayoutLabel.value}）`)
+const layoutTitle = computed(() => `文件夹排列：${layoutLabel.value}（点击切换为${nextLayoutLabel.value}）`)
 
 function onCycleLayout() {
   const next = cycleLayoutMode()
-  toast(`布局：${next.label}`)
+  toast(`文件夹排列：${next.label}`)
 }
 
 function defaultParentId() {
@@ -106,18 +106,11 @@ function onSearchEnter() {
         </button>
         <button class="icon-btn" :title="layoutTitle" @click="onCycleLayout">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <!-- 单列：整行横条 -->
-            <template v-if="store.layoutMode === 'single'">
+            <!-- 文件夹纵排：一条条往下堆 -->
+            <template v-if="store.layoutMode === 'stack'">
               <path d="M4 7h16M4 12h16M4 17h16" />
             </template>
-            <!-- 横排多列：一行多块 -->
-            <template v-else-if="store.layoutMode === 'row'">
-              <rect x="3" y="5" width="7.5" height="6" rx="1.6" />
-              <rect x="13.5" y="5" width="7.5" height="6" rx="1.6" />
-              <rect x="3" y="14" width="7.5" height="6" rx="1.6" />
-              <rect x="13.5" y="14" width="7.5" height="6" rx="1.6" />
-            </template>
-            <!-- 纵排多列：多栏竖条 -->
+            <!-- 文件夹并排：横向铺开成多列 -->
             <template v-else>
               <path d="M6 4v16M12 4v16M18 4v16" />
             </template>
