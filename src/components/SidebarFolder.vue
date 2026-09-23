@@ -49,6 +49,7 @@ function onContextMenu(e) {
     <div
       class="sf-row"
       :class="{ selected }"
+      :data-depth="depth"
       data-droppable
       @click="onClick"
       @dragover="overGrid($event, node.id)"
@@ -61,7 +62,9 @@ function onContextMenu(e) {
         class="sf-chev"
         type="button"
         @click.stop="onToggle"
-      >{{ open ? '▾' : '▸' }}</button>
+      >
+        <Icon :name="open ? 'chevron-down' : 'chevron-right'" :size="14" />
+      </button>
       <span v-else class="sf-chev"></span>
 
       <span class="sf-icon" :style="iconColor ? { color: iconColor } : undefined"><Icon :name="iconName" :size="16" /></span>

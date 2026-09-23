@@ -514,14 +514,29 @@ body.is-resizing-sidebar .sidebar { transition: none; }
   padding: 6px 8px;
   border-radius: 8px;
   cursor: pointer;
-  color: var(--text-2);
+  color: var(--text);
   font-size: 13px;
+  font-weight: 500;
   transition: background 0.16s ease, color 0.16s ease;
   min-width: 0;
   white-space: nowrap;
 }
+/* 层级：子文件夹逐级弱化，顶层更醒目 */
+.sf-row[data-depth="1"],
+.sf-row[data-depth="2"],
+.sf-row[data-depth="3"],
+.sf-row[data-depth="4"] {
+  color: var(--text-2);
+  font-size: 12.5px;
+  font-weight: 400;
+}
 .sf-row:hover { background: var(--row-hover); color: var(--accent-strong); }
-.sf-row.selected { background: var(--row-selected); font-weight: 600; }
+.sf-row.selected {
+  background: var(--row-selected);
+  color: var(--accent-strong);
+  font-weight: 600;
+  box-shadow: inset 2px 0 0 var(--accent);
+}
 .sf-chev {
   flex: 0 0 auto;
   width: 22px;
@@ -538,6 +553,7 @@ button.sf-chev {
   cursor: pointer;
   padding: 0;
   border-radius: 5px;
+  transition: color 0.16s, background 0.16s;
 }
 button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent); }
 .sf-icon {
@@ -565,7 +581,17 @@ button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent)
 .sf-count {
   flex: 0 0 auto;
   font-size: 11px;
+  font-weight: 600;
+  line-height: 1.6;
+  font-variant-numeric: tabular-nums;
   color: var(--text-3);
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.15);
+}
+.sf-row.selected .sf-count {
+  color: var(--accent-strong);
+  background: var(--accent-soft);
 }
 
 /* ============================== 主区域：横向多列瀑布流 ============================== */
