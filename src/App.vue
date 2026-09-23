@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
-import { store, clearSelection, isCollapsed, toggleCollapse, select, isSelected, loadVideoBlob, setSidebarWidth, folderColsCss } from './store.js'
+import { store, clearSelection, isCollapsed, toggleCollapse, select, isSelected, loadVideoBlob, setSidebarWidth } from './store.js'
 import { overGrid, onDrop, endDrag } from './drag.js'
 import { closeMenu, menuForEmpty, openSelected, deleteSelected, renameSelected } from './ui.js'
 import { marqueeMouseDown, marqueeMouseMove, marqueeMouseUp, consumeMarqueeClick } from './marquee.js'
@@ -199,12 +199,7 @@ onBeforeUnmount(() => {
 <template>
   <div
     class="app"
-    :class="[
-      'layout-' + store.layoutMode,
-      'layout-cols-' + (store.folderCols === 'auto' ? 'auto' : 'fixed'),
-      { 'app-loading': store.loading },
-    ]"
-    :style="{ '--folder-cols': folderColsCss() }"
+    :class="['layout-' + store.layoutMode, { 'app-loading': store.loading }]"
   >
     <div class="bg" :style="bgStyle"></div>
     <video

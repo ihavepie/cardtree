@@ -1,25 +1,18 @@
 <script setup>
 import { computed } from 'vue'
-import { store, toggleAllFolders, isAllCollapsed, toggleTheme, currentLayoutKey, applyLayoutPreset, LAYOUT_PRESETS, toast } from '../store.js'
-import { dialogNewBookmark, dialogNewFolder, openMenu } from '../ui.js'
+import { store, toggleAllFolders, isAllCollapsed, toggleTheme, cycleLayoutMode, toast } from '../store.js'
+import { dialogNewBookmark, dialogNewFolder } from '../ui.js'
 
 const trashCount = computed(() => store.trash.length)
 const allCollapsed = computed(() => isAllCollapsed())
 
-const currentPreset = computed(() => LAYOUT_PRESETS.find((p) => p.key === currentLayoutKey()) || LAYOUT_PRESETS[0])
-const layoutTitle = computed(() => `文件夹排列：${currentPreset.value.label}（点击选择）`)
+const layoutLabel = computed(() => (store.layoutMode === 'columns' ? '并排（自动列数）' : '纵排'))
+const nextLayoutLabel = computed(() => (store.layoutMode === 'columns' ? '纵排' : '并排（自动列数）'))
+const layoutTitle = computed(() => `文件夹排列：${layoutLabel.value}（点击切换为${nextLayoutLabel.value}）`)
 
-// 布局选项面板：复用现有右键菜单组件，不新增样式体系
-function onLayoutMenu(e) {
-  const r = e.currentTarget.getBoundingClientRect()
-  const items = LAYOUT_PRESETS.map((p) => ({
-    label: (currentLayoutKey() === p.key ? '✓ ' : '　') + p.label,
-    action: () => {
-      const applied = applyLayoutPreset(p.key)
-      if (applied) toast(`文件夹排列：${applied.label.replace('文件夹', '')}`)
-    },
-  }))
-  openMenu(r.left, r.bottom + 6, items)
+function onToggleLayout() {
+  const next = cycleLayoutMode()
+  toast(`文件夹排列：${next.key === 'columns' ? '并排（自动列数）' : '纵排'}`)
 }
 
 function defaultParentId() {
@@ -110,19 +103,13 @@ function onSearchEnter() {
           <span class="btn-label">回收站</span>
           <span v-if="trashCount" class="btn-count">{{ trashCount }}</span>
         </button>
-        <button class="icon-btn" :title="layoutTitle" @click="onLayoutMenu">
+        <button class="icon-btn" :title="layoutTitle" @click="onToggleLayout">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <!-- 文件夹纵排：一条条往下堆 -->
             <template v-if="store.layoutMode === 'stack'">
               <path d="M4 7h16M4 12h16M4 17h16" />
             </template>
-            <!-- 文件夹并排：2 列 / 3 列 / 4 列各画对应竖条数 -->
-            <template v-else-if="store.folderCols === 2">
-              <path d="M8 4v16M16 4v16" />
-            </template>
-            <template v-else-if="store.folderCols === 4">
-              <path d="M5 4v16M10 4v16M15 4v16M20 4v16" />
-            </template>
+            <!-- 文件夹并排：横向铺开成多栏 -->
             <template v-else>
               <path d="M6 4v16M12 4v16M18 4v16" />
             </template>

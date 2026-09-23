@@ -64,7 +64,6 @@ export const store = reactive({
   customBackgrounds: [],   // 自定义背景栏位：[{id, name, type:'image'|'color'|'gradient', ...}]
   theme: 'light',          // 主题：light | dark
   layoutMode: 'stack',     // 文件夹排列：stack 一条条往下堆 | columns 横向并排铺开（网址始终横排并排）
-  folderCols: 'auto',      // 并排时的栏数：'auto' 按宽度自动 | 2 | 3 | 4
   nodeMeta: {},            // 书签元数据：{ [bookmarkId]: { desc: string, tags: string[] } }
   nodeStats: {},           // 书签访问统计：{ [bookmarkId]: { count: number, lastOpenedAt: number } }
 
@@ -722,41 +721,13 @@ export function toggleTheme() {
   store.theme = store.theme === 'light' ? 'dark' : 'light'
 }
 
-// —— 文件夹排列模式（顶栏按钮打开选项面板，选择存 chrome.storage）——
-// 只管「文件夹」怎么排：一条条往下堆 / 横向并排铺开。网址（书签）始终保持横排并排。
+// —— 文件夹排列模式（顶栏按钮单击切换，选择存 chrome.storage）——
+// 只管「文件夹」怎么排：一条条往下堆 / 横向并排铺开（栏数按容器宽度自动）。
+// 网址（书签）始终保持横排并排。
 export const LAYOUT_MODES = [
   { key: 'stack', label: '纵排' },
   { key: 'columns', label: '并排' },
 ]
-
-/** 并排时的栏数：auto 按容器宽度自动，2/3/4 为固定栏数 */
-export const FOLDER_COLS = ['auto', 2, 3, 4]
-
-/** 顶栏选项面板里的全部排列方案（mode + 栏数） */
-export const LAYOUT_PRESETS = [
-  { key: 'stack::auto', label: '文件夹纵排（一条条往下堆）', mode: 'stack', cols: 'auto' },
-  { key: 'columns::auto', label: '文件夹并排 · 自动列数', mode: 'columns', cols: 'auto' },
-  { key: 'columns::2', label: '文件夹并排 · 2 列', mode: 'columns', cols: 2 },
-  { key: 'columns::3', label: '文件夹并排 · 3 列', mode: 'columns', cols: 3 },
-  { key: 'columns::4', label: '文件夹并排 · 4 列', mode: 'columns', cols: 4 },
-]
-
-export function currentLayoutKey() {
-  return store.layoutMode + '::' + store.folderCols
-}
-
-export function applyLayoutPreset(key) {
-  const p = LAYOUT_PRESETS.find((x) => x.key === key)
-  if (!p) return null
-  store.layoutMode = p.mode
-  store.folderCols = p.cols
-  return p
-}
-
-/** 并排栏数 → CSS columns 的值：auto 用列宽（按宽度自动分栏），固定值用栏数 */
-export function folderColsCss() {
-  return store.folderCols === 'auto' ? '300px' : store.folderCols
-}
 
 export function isLayoutMode(mode) {
   return LAYOUT_MODES.some((m) => m.key === mode)
@@ -766,8 +737,12 @@ export function setLayoutMode(mode) {
   if (isLayoutMode(mode)) store.layoutMode = mode
 }
 
-export function setFolderCols(cols) {
-  if (FOLDER_COLS.includes(cols)) store.folderCols = cols
+/** 切到下一档，返回新的档位对象（供顶栏提示用） */
+export function cycleLayoutMode() {
+  const i = LAYOUT_MODES.findIndex((m) => m.key === store.layoutMode)
+  const next = LAYOUT_MODES[(i + 1) % LAYOUT_MODES.length]
+  store.layoutMode = next.key
+  return next
 }
 
 export function setSidebarWidth(w) {
@@ -788,7 +763,7 @@ if (!isExtension) {
 export async function init() {
   let initCollapsed = false
   try {
-    const [c, r, t, done, bg, theme, customBackgrounds, nodeMeta, nodeStats, sidebarWidth, memos, memoState, memoStrokes, layoutMode, folderCols, expandedGrids] = await Promise.all([
+    const [c, r, t, done, bg, theme, customBackgrounds, nodeMeta, nodeStats, sidebarWidth, memos, memoState, memoStrokes, layoutMode, expandedGrids] = await Promise.all([
       storageGet('collapsed', []),
       storageGet('recent', []),
       storageGet('trash', []),
@@ -803,7 +778,6 @@ export async function init() {
       storageGet('memoState', null),
       storageGet('memoStrokes', []),
       storageGet('layoutMode', 'stack'),
-      storageGet('folderCols', 'auto'),
       storageGet('expandedGrids', []),
     ])
     const toArray = (v) => {
@@ -819,7 +793,6 @@ export async function init() {
     store.bg = bg || null
     store.theme = theme === 'dark' ? 'dark' : 'light'
     store.layoutMode = isLayoutMode(layoutMode) ? layoutMode : 'stack'
-    store.folderCols = FOLDER_COLS.includes(folderCols) ? folderCols : 'auto'
     // 只保留图片/视频背景，过滤掉旧的纯色/渐变/动态类型
     store.customBackgrounds = toArray(customBackgrounds).filter((b) => b.type === 'image' || b.type === 'video')
     // 若当前背景指向已移除的类型，则回到默认
@@ -864,7 +837,6 @@ export async function init() {
     applyTheme(v)
   })
   watch(() => store.layoutMode, (v) => storageSet('layoutMode', v))
-  watch(() => store.folderCols, (v) => storageSet('folderCols', v))
 
   // 首次使用：默认折叠所有子文件夹，让卡片树更紧凑（之后记住用户手动展开/折叠）
   if (!initCollapsed) {

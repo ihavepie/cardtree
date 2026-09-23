@@ -880,22 +880,16 @@ button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent)
    基础样式 = 纵排（.layout-stack）：同级文件夹一条条往下堆。
    ------------------------------------------------------------------ */
 
-/* 并排 · 自动列数：原生多栏，按实际高度紧密填充（矮文件夹下面不留大片空白）。
-   注意多栏只会"最多"用到它算出的栏数，内容少时右侧可能空着 —— 自动档可接受。 */
-.app.layout-columns.layout-cols-auto .cascade-children {
+/* 并排：同级文件夹横向铺开成多栏，紧密填充（矮文件夹下面不留大片空白）。
+   用原生多栏而不是 grid：grid 的行高按该行最高的文件夹对齐，矮的下面会留一块空白。
+   栏数由浏览器按容器宽度自动决定（列宽 300px 下限），无需 JS 量宽度。 */
+.app.layout-columns .cascade-children {
   columns: 300px;
   column-gap: 16px;
 }
-.app.layout-columns.layout-cols-auto .cascade-node {
-  break-inside: avoid;
-  margin-bottom: 10px;
-}
-/* 并排 · 固定列数：用手动指定的栏数严格分栏（网格行优先，栏数一定等于所选值） */
-.app.layout-columns.layout-cols-fixed .cascade-children {
-  display: grid;
-  grid-template-columns: repeat(var(--folder-cols), minmax(0, 1fr));
-  gap: 10px 16px;
-  align-items: start;
+.app.layout-columns .cascade-node {
+  break-inside: avoid;   /* 一个文件夹不被拆到两栏 */
+  margin-bottom: 10px;   /* 栏内文件夹之间留间距 */
 }
 /* 文件夹变窄后，栏内网址若仍按 152px 起算就只剩 1 列（又变成竖着排）；
    这里把最小列宽再收窄，保证每个文件夹里网址依旧是并排的 */
