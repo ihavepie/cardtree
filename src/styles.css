@@ -822,6 +822,31 @@ button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent)
   border-radius: 12px;
 }
 
+/* 「展开全部 N 个」：横跨整行的一条，接在可见书签之后 */
+.grid-more {
+  grid-column: 1 / -1;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 2px 0;
+  padding: 3px 9px 3px 7px;
+  border: 1px dashed rgba(148, 163, 184, 0.5);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-2);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.16s, border-color 0.16s, background 0.16s;
+}
+.grid-more:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
 /* ============================== 文件夹排列模式（顶栏按钮切换） ==============================
    网址（书签）永远横排并排；这里只决定「文件夹」怎么排。
    基础样式 = 纵排（.layout-stack）：同级文件夹一条条往下堆。

@@ -50,6 +50,7 @@ export const store = reactive({
   flatList: [],            // 展示顺序的扁平列表（用于范围选择）
 
   collapsed: new Set(),    // 折叠文件夹 id
+  expandedGrids: new Set(), // 已「展开全部」的书签网格（所属文件夹 id）
   selection: new Set(),    // 选中节点 id
   anchorId: null,          // Shift 范围选择锚点
 
@@ -287,6 +288,19 @@ export function setMemoState(patch) {
 
 export function isCollapsed(id) {
   return store.collapsed.has(id)
+}
+
+// —— 书签网格「展开全部」——
+// 每个文件夹的直接书签默认只显示前 PREVIEW_COUNT 个，避免卡片无限变长；点开才全铺。
+export const PREVIEW_COUNT = 8
+
+export function isGridExpanded(id) {
+  return store.expandedGrids.has(id)
+}
+
+export function toggleGridExpanded(id) {
+  if (store.expandedGrids.has(id)) store.expandedGrids.delete(id)
+  else store.expandedGrids.add(id)
 }
 
 export function toggleCollapse(id) {
@@ -748,7 +762,7 @@ if (!isExtension) {
 export async function init() {
   let initCollapsed = false
   try {
-    const [c, r, t, done, bg, theme, customBackgrounds, nodeMeta, nodeStats, sidebarWidth, memos, memoState, memoStrokes, layoutMode] = await Promise.all([
+    const [c, r, t, done, bg, theme, customBackgrounds, nodeMeta, nodeStats, sidebarWidth, memos, memoState, memoStrokes, layoutMode, expandedGrids] = await Promise.all([
       storageGet('collapsed', []),
       storageGet('recent', []),
       storageGet('trash', []),
@@ -763,6 +777,7 @@ export async function init() {
       storageGet('memoState', null),
       storageGet('memoStrokes', []),
       storageGet('layoutMode', 'stack'),
+      storageGet('expandedGrids', []),
     ])
     const toArray = (v) => {
       if (Array.isArray(v)) return v
@@ -771,6 +786,7 @@ export async function init() {
       return []
     }
     store.collapsed = new Set(Array.isArray(c) ? c : [])
+    store.expandedGrids = new Set(Array.isArray(expandedGrids) ? expandedGrids : [])
     store.recent = toArray(r)
     store.trash = toArray(t)
     store.bg = bg || null
@@ -800,6 +816,10 @@ export async function init() {
   watch(
     () => Array.from(store.collapsed),
     (v) => storageSet('collapsed', v),
+  )
+  watch(
+    () => Array.from(store.expandedGrids),
+    (v) => storageSet('expandedGrids', v),
   )
   watch(() => store.recent, (v) => storageSet('recent', v), { deep: true })
   watch(() => store.trash, (v) => storageSet('trash', v), { deep: true })
