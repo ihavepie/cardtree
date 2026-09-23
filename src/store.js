@@ -62,6 +62,7 @@ export const store = reactive({
   bgPanelOpen: false,      // 背景设置面板
   customBackgrounds: [],   // 自定义背景栏位：[{id, name, type:'image'|'color'|'gradient', ...}]
   theme: 'light',          // 主题：light | dark
+  layoutMode: 'row',       // 书签布局：single 单列 | row 横排多列 | col 纵排多列（列数按宽度自动）
   nodeMeta: {},            // 书签元数据：{ [bookmarkId]: { desc: string, tags: string[] } }
   nodeStats: {},           // 书签访问统计：{ [bookmarkId]: { count: number, lastOpenedAt: number } }
 
@@ -678,6 +679,29 @@ export function toggleTheme() {
   store.theme = store.theme === 'light' ? 'dark' : 'light'
 }
 
+// —— 书签布局模式：单列 / 横排多列 / 纵排多列（顶栏按钮循环切换，选择存 chrome.storage）——
+export const LAYOUT_MODES = [
+  { key: 'single', label: '单列' },
+  { key: 'row', label: '横排多列' },
+  { key: 'col', label: '纵排多列' },
+]
+
+export function isLayoutMode(mode) {
+  return LAYOUT_MODES.some((m) => m.key === mode)
+}
+
+export function setLayoutMode(mode) {
+  if (isLayoutMode(mode)) store.layoutMode = mode
+}
+
+/** 切到下一档，返回新的档位对象（供顶栏提示用） */
+export function cycleLayoutMode() {
+  const i = LAYOUT_MODES.findIndex((m) => m.key === store.layoutMode)
+  const next = LAYOUT_MODES[(i + 1) % LAYOUT_MODES.length]
+  store.layoutMode = next.key
+  return next
+}
+
 export function setSidebarWidth(w) {
   store.sidebarWidth = Math.round(Math.min(520, Math.max(150, w)))
 }
@@ -696,7 +720,7 @@ if (!isExtension) {
 export async function init() {
   let initCollapsed = false
   try {
-    const [c, r, t, done, bg, theme, customBackgrounds, nodeMeta, nodeStats, sidebarWidth, memos, memoState, memoStrokes] = await Promise.all([
+    const [c, r, t, done, bg, theme, customBackgrounds, nodeMeta, nodeStats, sidebarWidth, memos, memoState, memoStrokes, layoutMode] = await Promise.all([
       storageGet('collapsed', []),
       storageGet('recent', []),
       storageGet('trash', []),
@@ -710,6 +734,7 @@ export async function init() {
       storageGet('memos', []),
       storageGet('memoState', null),
       storageGet('memoStrokes', []),
+      storageGet('layoutMode', 'row'),
     ])
     const toArray = (v) => {
       if (Array.isArray(v)) return v
@@ -722,6 +747,7 @@ export async function init() {
     store.trash = toArray(t)
     store.bg = bg || null
     store.theme = theme === 'dark' ? 'dark' : 'light'
+    store.layoutMode = isLayoutMode(layoutMode) ? layoutMode : 'row'
     // 只保留图片/视频背景，过滤掉旧的纯色/渐变/动态类型
     store.customBackgrounds = toArray(customBackgrounds).filter((b) => b.type === 'image' || b.type === 'video')
     // 若当前背景指向已移除的类型，则回到默认
@@ -761,6 +787,7 @@ export async function init() {
     storageSet('theme', v)
     applyTheme(v)
   })
+  watch(() => store.layoutMode, (v) => storageSet('layoutMode', v))
 
   // 首次使用：默认折叠所有子文件夹，让卡片树更紧凑（之后记住用户手动展开/折叠）
   if (!initCollapsed) {

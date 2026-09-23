@@ -197,7 +197,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="app" :class="{ 'app-loading': store.loading }">
+  <div class="app" :class="['layout-' + store.layoutMode, { 'app-loading': store.loading }]">
     <div class="bg" :style="bgStyle"></div>
     <video
       v-if="bgVideoUrl"

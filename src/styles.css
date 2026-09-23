@@ -822,6 +822,29 @@ button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent)
   border-radius: 12px;
 }
 
+/* ============================== 书签布局模式（顶栏按钮三档循环） ==============================
+   基础样式 = 横排多列（.layout-row，grid 自动分列）
+   ------------------------------------------------------------------ */
+
+/* 单列：一条一条占满整行 */
+.app.layout-single .bookmark-grid {
+  grid-template-columns: 1fr;
+}
+
+/* 纵排多列：按栏从上往下填满，列高自动均衡（原生多栏，不引库）
+   columns 用「列宽」形式，栏数由浏览器按容器宽度自动决定，无需 JS 量宽度。
+   注意：内容按最小高度平衡，所以书签较少时右侧可能留空栏 —— 同横排模式最后一行不满一样，属正常。 */
+.app.layout-col .bookmark-grid {
+  display: block;
+  columns: 176px;
+  column-gap: 3px;
+  max-height: none;        /* 纵向填充下不能限高，否则多栏会横向溢出 */
+  overflow: visible;
+}
+.app.layout-col .bookmark-grid > * {
+  break-inside: avoid;     /* 书签条不被拆到两栏 */
+}
+
 .bookmark-item {
   position: relative;
   display: flex;

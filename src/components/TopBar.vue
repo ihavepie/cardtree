@@ -1,10 +1,20 @@
 <script setup>
 import { computed } from 'vue'
-import { store, toggleAllFolders, isAllCollapsed, toggleTheme } from '../store.js'
+import { store, toggleAllFolders, isAllCollapsed, toggleTheme, cycleLayoutMode, LAYOUT_MODES, toast } from '../store.js'
 import { dialogNewBookmark, dialogNewFolder } from '../ui.js'
 
 const trashCount = computed(() => store.trash.length)
 const allCollapsed = computed(() => isAllCollapsed())
+
+const layoutIndex = computed(() => Math.max(0, LAYOUT_MODES.findIndex((m) => m.key === store.layoutMode)))
+const layoutLabel = computed(() => LAYOUT_MODES[layoutIndex.value].label)
+const nextLayoutLabel = computed(() => LAYOUT_MODES[(layoutIndex.value + 1) % LAYOUT_MODES.length].label)
+const layoutTitle = computed(() => `布局：${layoutLabel.value}（点击切换为${nextLayoutLabel.value}）`)
+
+function onCycleLayout() {
+  const next = cycleLayoutMode()
+  toast(`布局：${next.label}`)
+}
 
 function defaultParentId() {
   const bar = store.roots.find((r) => (r.title || '').includes('书签栏')) || store.roots[0]
@@ -93,6 +103,25 @@ function onSearchEnter() {
           </svg>
           <span class="btn-label">回收站</span>
           <span v-if="trashCount" class="btn-count">{{ trashCount }}</span>
+        </button>
+        <button class="icon-btn" :title="layoutTitle" @click="onCycleLayout">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <!-- 单列：整行横条 -->
+            <template v-if="store.layoutMode === 'single'">
+              <path d="M4 7h16M4 12h16M4 17h16" />
+            </template>
+            <!-- 横排多列：一行多块 -->
+            <template v-else-if="store.layoutMode === 'row'">
+              <rect x="3" y="5" width="7.5" height="6" rx="1.6" />
+              <rect x="13.5" y="5" width="7.5" height="6" rx="1.6" />
+              <rect x="3" y="14" width="7.5" height="6" rx="1.6" />
+              <rect x="13.5" y="14" width="7.5" height="6" rx="1.6" />
+            </template>
+            <!-- 纵排多列：多栏竖条 -->
+            <template v-else>
+              <path d="M6 4v16M12 4v16M18 4v16" />
+            </template>
+          </svg>
         </button>
         <button class="icon-btn" title="背景" @click="store.bgPanelOpen = true">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
