@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "书签板",
+  "version": "5.0.0",
+  "description": "把新标签页变成书签板：毛玻璃卡片、文件夹级联展开、拖拽整理、标签/描述、搜索、回收站。",
+  "chrome_url_overrides": {
+    "newtab": "index.html"
+  },
+  "permissions": ["bookmarks", "storage", "favicon"],
+  "host_permissions": ["http://*/*", "https://*/*"],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

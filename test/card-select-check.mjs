@@ -1,0 +1,42 @@
+/* 验证：选中文件夹→卡片整体蓝；书签 chip 不单独变蓝 */
+import { mkdtempSync, rmSync } from 'node:fs';
+import { spawn } from 'node:child_process';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
+const CDP = 'http://127.0.0.1:9239';
+const EDGE = '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge';
+const profile = mkdtempSync(join(tmpdir(), 'cardtree-cardsel-'));
+const edge = spawn(EDGE, ['--headless=new','--no-sandbox','--disable-gpu','--no-first-run',`--remote-debugging-port=9239`,`--user-data-dir=${profile}`,'--window-size=1400,1000','about:blank'], { stdio: 'ignore' });
+async function waitHttp(u,t=15000){const t0=Date.now();while(Date.now()-t0<t){try{return await (await fetch(u)).json();}catch{await new Promise(r=>setTimeout(r,250));}}throw new Error('CDP');}
+let ws;
+try {
+  const list = await waitHttp(CDP + '/json');
+  ws = new WebSocket(list.find(t=>t.type==='page').webSocketDebuggerUrl);
+  await new Promise((res,rej)=>{ws.onopen=res;ws.onerror=rej;});
+  let id=0;const pending=new Map();
+  ws.onmessage=(ev)=>{const m=JSON.parse(ev.data);if(m.method==='Runtime.exceptionThrown')console.log('EXC',m.params.exceptionDetails?.exception?.description||'');if(m.id&&pending.has(m.id)){pending.get(m.id)(m);pending.delete(m.id);}};
+  const send=(method,params={})=>new Promise((res,rej)=>{const i=++id;pending.set(i,m=>m.error?rej(new Error(m.error.message)):res(m.result));ws.send(JSON.stringify({id:i,method,params}));});
+  const ev=async e=>(await send('Runtime.evaluate',{expression:e,awaitPromise:true,returnByValue:true})).result.value;
+  const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+  await send('Page.enable');await send('Runtime.enable');
+  await send('Page.navigate',{url:'http://localhost:5199/'});
+  for(let i=0;i<60;i++){await sleep(250);if(await ev(`!!(window.__store && !window.__store.loading)`))break;}
+  await sleep(600);
+
+  await ev(`(() => { const r = [...document.querySelectorAll('.sf-row')].find(x => x.querySelector('.sf-name')?.textContent === '前端开发'); r.querySelector('.sf-chev').click(); return true; })()`);
+  await sleep(300);
+  await ev(`(() => { const r = [...document.querySelectorAll('.sf-row')].find(x => x.querySelector('.sf-name')?.textContent === '前端开发'); r.dispatchEvent(new MouseEvent('click', { bubbles: true })); return true; })()`);
+  await sleep(100);
+
+  const r = await ev(`({
+    devCard: document.querySelector('.main [data-id="f-dev"] .cascade-card').classList.contains('selected'),
+    uiCard: document.querySelector('.main [data-id="f-dev-ui"] .cascade-card').classList.contains('selected'),
+    vueChip: [...document.querySelectorAll('.bookmark-item')].find(e => e.querySelector('.bookmark-title')?.textContent === 'Vue.js').classList.contains('selected'),
+  })`);
+  console.log(JSON.stringify(r, null, 2));
+} finally {
+  try{ws&&ws.close();}catch{}
+  try{edge.kill('SIGTERM');}catch{}
+  try{rmSync(profile,{recursive:true,force:true});}catch{}
+}
