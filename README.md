@@ -48,12 +48,14 @@
 ## 🧪 测试
 
 ```bash
-python3 -m http.server 5199 --directory dist &   # 三个脚本都从 5199 取页面
+python3 -m http.server 5199 --directory dist &   # 各脚本都从 5199 取页面
 
 node test/cdp-driver.mjs           # 交互回归：渲染/折叠/拖拽排序/拖入文件夹/嵌套/拖回书签栏/右键/搜索/新建/回收站
 node test/layout-modes-check.mjs   # 文件夹排列：纵排 / 并排的栏数与列轨道、按钮切换、拖拽指示线、持久化
 node test/grid-preview-check.mjs   # 前 N 个 + 展开全部：8→16→8、按钮文案、持久化、拖拽落点
-node test/shot-home.mjs 前缀 1440 940  # 视觉截图（浅色/展开/深色/悬停/拖拽指示线）
+node test/sidebar-diag.mjs 2200 1200           # 侧边栏几何：不同窗口/侧栏宽度下"侧栏↔卡片"间距
+node test/sidebar-firstpaint-check.mjs         # 首帧校验：注入 chrome 桩（storage 延迟 40ms），看刷新时宽度/主题是否跳变
+node test/shot-home.mjs 前缀 1440 940          # 视觉截图（浅色/展开/深色/悬停/拖拽指示线）
 ```
 
 脚本自启动无头 Edge（路径按 `/Applications` 与外置卷自动探测，可用 `EDGE_BIN=...` 覆盖），截图存于 `test/screens/`。
@@ -95,6 +97,8 @@ cardtree/
     ├── cdp-driver.mjs         # CDP 交互回归（含数据完整性断言）
     ├── layout-modes-check.mjs # 文件夹排列模式校验
     ├── grid-preview-check.mjs # 前 N 个 + 展开全部校验
+    ├── sidebar-diag.mjs       # 侧边栏间距几何诊断
+    ├── sidebar-firstpaint-check.mjs # 侧边栏/主题首帧跳变校验（chrome 桩）
     ├── shot-home.mjs          # 视觉截图
     └── screens/               # 测试截图
 ```

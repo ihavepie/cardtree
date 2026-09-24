@@ -42,6 +42,42 @@ function storageSet(key, value) {
   }
 }
 
+// ---------------------------------------------------------------- 首帧同步预置
+// chrome.storage 是异步 IPC：等它回来时首帧已经画过了 —— 侧边栏宽度会从默认 230 跳到上次的
+// 值（刷新时"弹一下"），深色主题也会先闪一下白。
+// 这里把影响首帧的几个 UI 偏好同时镜像到 localStorage（可同步读），初始化时先用它，
+// 随后由 init() 与 chrome.storage 对齐；只是把"上次的值"提前一帧拿到，不是新的数据源。
+// 注意：只镜像这几个小字段，背景图 / 便签等大对象不要镜像进来。
+const SYNC_PREF_PREFIX = 'cardtree:sync:'
+
+function syncReadPref(key, fallback) {
+  try {
+    const raw = localStorage.getItem(SYNC_PREF_PREFIX + key)
+    return raw == null ? fallback : JSON.parse(raw)
+  } catch {
+    return fallback
+  }
+}
+
+function syncWritePref(key, value) {
+  try {
+    localStorage.setItem(SYNC_PREF_PREFIX + key, JSON.stringify(value))
+  } catch { /* ignore */ }
+}
+
+function syncReadSidebarWidth() {
+  const w = syncReadPref('sidebarWidth', 230)
+  return typeof w === 'number' ? Math.round(Math.min(520, Math.max(150, w))) : 230
+}
+
+function syncReadLayoutMode() {
+  return syncReadPref('layoutMode', 'stack') === 'columns' ? 'columns' : 'stack'
+}
+
+function syncReadTheme() {
+  return syncReadPref('theme', 'light') === 'dark' ? 'dark' : 'light'
+}
+
 // ---------------------------------------------------------------- 状态
 export const store = reactive({
   loading: true,
@@ -58,12 +94,12 @@ export const store = reactive({
   trash: [],               // 回收站（软删除快照）
   trashOpen: false,
   sidebarOpen: true,       // 侧边栏是否展开
-  sidebarWidth: 230,       // 侧边栏宽度（可拖拽拉伸）
+  sidebarWidth: syncReadSidebarWidth(), // 侧边栏宽度（可拖拽拉伸）·初值取自同步镜像，避免刷新跳一下
   bg: null,                // 背景：null | {type:'custom', id} | {type:'animated'}
   bgPanelOpen: false,      // 背景设置面板
   customBackgrounds: [],   // 自定义背景栏位：[{id, name, type:'image'|'color'|'gradient', ...}]
-  theme: 'light',          // 主题：light | dark
-  layoutMode: 'stack',     // 文件夹排列：stack 一条条往下堆 | columns 横向并排铺开（网址始终横排并排）
+  theme: syncReadTheme(),  // 主题：light | dark ·初值取自同步镜像，避免刷新先白后黑
+  layoutMode: syncReadLayoutMode(), // 文件夹排列：stack 纵排 | columns 并排（网址始终横排并排）
   nodeMeta: {},            // 书签元数据：{ [bookmarkId]: { desc: string, tags: string[] } }
   nodeStats: {},           // 书签访问统计：{ [bookmarkId]: { count: number, lastOpenedAt: number } }
 
@@ -749,7 +785,7 @@ export function setSidebarWidth(w) {
   store.sidebarWidth = Math.round(Math.min(520, Math.max(150, w)))
 }
 
-function applyTheme(t) {
+export function applyTheme(t) {
   document.body.dataset.theme = t
 }
 
@@ -807,6 +843,10 @@ export async function init() {
     store.memoState = (memoState && typeof memoState === 'object' && !Array.isArray(memoState))
       ? { mode: 'ball', ballPos: null, panelPos: null, ...memoState }
       : { mode: 'ball', ballPos: null, panelPos: null }
+    // 权威值就位后回写同步镜像（下一次刷新首帧就能直接用；首次启用该机制时也靠这里补上）
+    syncWritePref('sidebarWidth', store.sidebarWidth)
+    syncWritePref('theme', store.theme)
+    syncWritePref('layoutMode', store.layoutMode)
     applyTheme(store.theme)
     initCollapsed = !!done
   } catch { /* ignore */ }
@@ -828,15 +868,22 @@ export async function init() {
   watch(() => store.customBackgrounds, (v) => storageSet('customBackgrounds', v), { deep: true })
   watch(() => store.nodeMeta, (v) => storageSet('nodeMeta', v), { deep: true })
   watch(() => store.nodeStats, (v) => storageSet('nodeStats', v), { deep: true })
-  watch(() => store.sidebarWidth, (v) => storageSet('sidebarWidth', v))
+  watch(() => store.sidebarWidth, (v) => {
+    storageSet('sidebarWidth', v)
+    syncWritePref('sidebarWidth', v)
+  })
   watch(() => store.memos, debounce((v) => storageSet('memos', v), 300), { deep: true })
   watch(() => store.memoStrokes, debounce((v) => storageSet('memoStrokes', v), 300), { deep: true })
   watch(() => store.memoState, debounce((v) => storageSet('memoState', v), 300), { deep: true })
   watch(() => store.theme, (v) => {
     storageSet('theme', v)
+    syncWritePref('theme', v)
     applyTheme(v)
   })
-  watch(() => store.layoutMode, (v) => storageSet('layoutMode', v))
+  watch(() => store.layoutMode, (v) => {
+    storageSet('layoutMode', v)
+    syncWritePref('layoutMode', v)
+  })
 
   // 首次使用：默认折叠所有子文件夹，让卡片树更紧凑（之后记住用户手动展开/折叠）
   if (!initCollapsed) {

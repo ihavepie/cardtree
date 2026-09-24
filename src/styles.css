@@ -603,8 +603,9 @@ button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent)
   scroll-behavior: smooth;
 }
 .main-inner {
-  max-width: 1400px;
-  margin: 0 auto;
+  /* 不用「max-width + 居中」：卡片一旦撞到宽度上限就会被居中，
+     侧栏一拉伸/收窄，侧栏到卡片的间距就跟着变（实测 2200 宽下侧栏 150 时撑出 112px）。
+     改为铺满主区，间距恒等于 .main 的 padding（26px）。 */
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 16px;
@@ -1893,13 +1894,12 @@ body[data-theme="dark"] .dd-input { box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.
   .detail-drawer { width: 100%; }
 }
 
-/* ============================== 大屏加宽（保持居中，缩小与侧栏的间距） ============================== */
+/* ============================== 大屏加宽 ============================== */
+/* 顶栏内容居中并限宽；主区卡片铺满主区（间距与侧栏恒定），故不参与这里的限宽 */
 @media (min-width: 1700px) {
-  .main-inner,
   .topbar-inner { max-width: 1800px; }
 }
 @media (min-width: 2300px) {
-  .main-inner,
   .topbar-inner { max-width: 2440px; }
 }
 
