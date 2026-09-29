@@ -7,6 +7,8 @@ import { spawn } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+const W = Number(process.argv[2] || 1440);
+const H = Number(process.argv[3] || 940);
 const CDP_HTTP = 'http://127.0.0.1:9233';
 const PAGE_URL = 'http://localhost:5199/';
 const SHOT_DIR = fileURLToPath(new URL('./screens/', import.meta.url));
@@ -24,7 +26,7 @@ const edge = spawn(EDGE_BIN, [
   '--headless=new', '--no-sandbox', '--disable-gpu', '--disable-software-rasterizer',
   '--no-first-run', '--no-default-browser-check', '--hide-scrollbars',
   `--remote-debugging-port=9233`, `--user-data-dir=${profile}`,
-  '--window-size=1440,940', 'about:blank',
+  `--window-size=${W},${H}`, 'about:blank',
 ], { stdio: 'ignore' });
 
 async function waitHttp(url, timeoutMs = 15000) {
@@ -114,7 +116,7 @@ try {
 
   await send('Page.enable');
   await send('Runtime.enable');
-  await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 940, deviceScaleFactor: 2, mobile: false });
+  await send('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceScaleFactor: 2, mobile: false });
   await send('Page.navigate', { url: PAGE_URL });
   await waitReady();
   await sleep(1500);

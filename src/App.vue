@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
-import { store, clearSelection, isCollapsed, toggleCollapse, select, isSelected, loadVideoBlob, setSidebarWidth } from './store.js'
+import { store, clearSelection, isCollapsed, toggleCollapse, select, isSelected, loadVideoBlob, setSidebarWidth, filteredRoots, tagIndex, setTagFilter, clearTagFilter, revealNode } from './store.js'
 import { overGrid, onDrop, endDrag } from './drag.js'
 import { closeMenu, menuForEmpty, openSelected, deleteSelected, renameSelected } from './ui.js'
 import { marqueeMouseDown, marqueeMouseMove, marqueeMouseUp, consumeMarqueeClick } from './marquee.js'
@@ -67,13 +67,28 @@ watch(
 )
 
 // 顶层分区：书签栏/其他书签始终显示（即使为空）；其余（如移动设备书签）仅在有内容时显示
+// 有标签筛选时改用「筛选后的树」，并只保留还有内容的卡片
+const sourceRoots = computed(() => (store.tagFilter ? filteredRoots.value : store.roots))
+
 const visibleRoots = computed(() =>
-  store.roots.filter((r) => {
+  sourceRoots.value.filter((r) => {
     const hasKids = (r.children || []).length > 0
+    if (store.tagFilter) return hasKids
     const t = r.title || ''
     return hasKids || t.includes('书签栏') || t.includes('其他书签')
   }),
 )
+
+// 看板索引条：顶层文件夹（跟着筛选结果走，点击跳转并高亮）
+const indexFolders = computed(() => {
+  const out = []
+  for (const r of sourceRoots.value) {
+    for (const c of r.children || []) if (!c.url) out.push(c)
+  }
+  return out
+})
+
+const showIndex = computed(() => !searching.value && (indexFolders.value.length > 1 || tagIndex.value.length > 0))
 
 function onEmptyContext(e, parentId) {
   e.preventDefault()
@@ -220,12 +235,51 @@ onBeforeUnmount(() => {
       <div v-if="store.sidebarOpen" class="sidebar-resizer" title="拖拽调整侧边栏宽度" @mousedown="onResizeStart"></div>
 
       <main class="main">
+      <!-- 看板索引条：文件夹跳转 + 标签筛选。放在 .main-inner 之外，避免破坏其 auto-fit 网格
+           （索引条一旦跨列，auto-fit 的空轨道就不再折叠，根卡片会被压成一条轨道） -->
+      <nav v-if="showIndex" class="board-index">
+        <div v-if="indexFolders.length > 1" class="idx-group">
+          <span class="idx-label">文件夹</span>
+          <button
+            v-for="f in indexFolders"
+            :key="f.id"
+            class="idx-chip"
+            type="button"
+            :title="`跳转到「${f.title || '未命名'}」`"
+            @click="revealNode(f.id)"
+          >
+            {{ f.title || '未命名' }}<span class="idx-count">{{ (f.children || []).length }}</span>
+          </button>
+        </div>
+        <span v-if="indexFolders.length > 1 && tagIndex.length" class="idx-sep"></span>
+        <div v-if="tagIndex.length" class="idx-group">
+          <span class="idx-label">标签</span>
+          <button
+            v-for="t in tagIndex"
+            :key="t.tag"
+            class="idx-chip"
+            :class="{ active: store.tagFilter === t.tag }"
+            type="button"
+            :title="store.tagFilter === t.tag ? '取消筛选' : `只看带「${t.tag}」的书签`"
+            @click="setTagFilter(t.tag)"
+          >
+            {{ t.tag }}<span class="idx-count">{{ t.count }}</span>
+          </button>
+          <button v-if="store.tagFilter" class="idx-clear" type="button" @click="clearTagFilter">清除筛选</button>
+        </div>
+      </nav>
+
       <div class="main-inner">
         <div v-if="store.loading" class="loading">加载书签中…</div>
 
         <SearchResults v-else-if="searching" />
 
         <template v-else>
+          <div v-if="store.tagFilter && !visibleRoots.length" class="empty-hint board-filter-empty">
+            <div class="big">没有带「{{ store.tagFilter }}」标签的书签</div>
+            <div class="sub">换个标签，或<button class="link-btn" type="button" @click="clearTagFilter">清除筛选</button></div>
+          </div>
+
           <section
             v-for="root in visibleRoots"
             :key="root.id"

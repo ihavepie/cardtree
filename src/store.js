@@ -104,6 +104,7 @@ export const store = reactive({
   nodeStats: {},           // 书签访问统计：{ [bookmarkId]: { count: number, lastOpenedAt: number } }
 
   query: '',
+  tagFilter: '',           // 看板标签栏当前选中的标签（空 = 不筛选；不持久化，刷新即清）
 
   // 拖拽
   dragging: null,          // { kind, ids, titles, urls, count }
@@ -617,8 +618,7 @@ export function clearRecent() {
 }
 
 // ---------------------------------------------------------------- 搜索
-export const searchResults = computed(() => {
-  const q = store.query.trim().toLowerCase()
+export const searchResults = computed(() => {  const q = store.query.trim().toLowerCase()
   if (!q) return []
   const out = []
   const walk = (node, path) => {
@@ -644,6 +644,72 @@ export const searchResults = computed(() => {
   }
   for (const r of store.roots) walk(r, [])
   return out
+})
+
+// ---------------------------------------------------------------- 看板索引：标签聚合与筛选
+/** 所有书签的标签聚合：[{ tag, count }]，按数量降序（同数量按名称） */
+export const tagIndex = computed(() => {
+  const counts = new Map()
+  const walk = (n) => {
+    if (n.url) {
+      const tags = (store.nodeMeta[n.id] && store.nodeMeta[n.id].tags) || []
+      for (const t of tags) {
+        const key = String(t).trim()
+        if (key) counts.set(key, (counts.get(key) || 0) + 1)
+      }
+    }
+    for (const c of n.children || []) walk(c)
+  }
+  for (const r of store.roots) walk(r)
+  return [...counts.entries()]
+    .map(([tag, count]) => ({ tag, count }))
+    .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag, 'zh'))
+})
+
+/** 点标签：选中；再点同一个 = 取消 */
+export function setTagFilter(tag) {
+  store.tagFilter = store.tagFilter === tag ? '' : tag
+  if (store.tagFilter) expandMatchedFolders()
+}
+
+export function clearTagFilter() {
+  store.tagFilter = ''
+}
+
+/** 筛选时自动展开命中的文件夹：否则默认折叠状态下"筛了标签却看不到东西" */
+function expandMatchedFolders() {
+  const walk = (node) => {
+    if (isFolder(node) && store.collapsed.has(node.id)) store.collapsed.delete(node.id)
+    for (const c of node.children || []) walk(c)
+  }
+  for (const r of filteredRoots.value) walk(r)
+}
+
+/**
+ * 按标签筛选后的树：保留文件夹结构，只留带该标签的书签，空文件夹 / 空分组去掉。
+ * 组件拿到的还是同一种树，所以渲染 / 拖拽逻辑不用改。
+ */
+export const filteredRoots = computed(() => {
+  const tag = store.tagFilter
+  if (!tag) return store.roots
+  const hit = (n) => {
+    const tags = (store.nodeMeta[n.id] && store.nodeMeta[n.id].tags) || []
+    return tags.some((t) => String(t).trim() === tag)
+  }
+  const prune = (node) => {
+    const kids = []
+    for (const c of node.children || []) {
+      if (c.url) {
+        if (hit(c)) kids.push(c)
+      } else {
+        const sub = prune(c)
+        if (sub) kids.push(sub)
+      }
+    }
+    if (!kids.length) return null
+    return { ...node, children: kids }
+  }
+  return store.roots.map((r) => prune(r)).filter(Boolean)
 })
 
 export function revealNode(id) {

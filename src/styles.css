@@ -845,6 +845,102 @@ button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent)
   max-height: 260px;
   overflow-y: auto;
 }
+/* ============================== 看板索引条（文件夹跳转 + 标签筛选） ============================== */
+.board-index {
+  /* 直接挂在 .main 下（不进 .main-inner 网格），吸顶相对主区滚动容器 */
+  position: sticky;
+  top: -1px;
+  z-index: 12;
+  margin: 0 0 16px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: var(--glass-bg-strong);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(16px) saturate(1.6);
+  -webkit-backdrop-filter: blur(16px) saturate(1.6);
+  box-shadow: 0 8px 22px -16px rgba(67, 74, 148, 0.5);
+}
+.idx-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.idx-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: var(--text-3);
+  margin-right: 2px;
+}
+.idx-sep {
+  width: 1px;
+  align-self: stretch;
+  margin: 2px 2px;
+  background: rgba(148, 163, 184, 0.28);
+}
+.idx-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-2);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.14s, color 0.14s, border-color 0.14s;
+}
+.idx-chip:hover { background: var(--chip-hover); color: var(--accent-strong); }
+.idx-chip.active {
+  background: var(--accent-soft);
+  border-color: rgba(99, 102, 241, 0.35);
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+.idx-count {
+  font-size: 10.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-3);
+  background: rgba(148, 163, 184, 0.16);
+  border-radius: 999px;
+  padding: 0 5px;
+  line-height: 1.5;
+}
+.idx-chip.active .idx-count {
+  color: var(--accent-strong);
+  background: rgba(99, 102, 241, 0.16);
+}
+.idx-clear {
+  border: none;
+  background: none;
+  color: var(--text-3);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+.idx-clear:hover { color: var(--accent); background: var(--accent-soft); }
+.board-filter-empty { grid-column: 1 / -1; }
+.board-filter-empty .link-btn {
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-family: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+  padding: 0 2px;
+}
+
 .bookmark-grid.drag-over-empty {
   outline: 2px dashed var(--accent);
   outline-offset: 4px;

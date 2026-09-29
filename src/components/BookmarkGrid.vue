@@ -10,11 +10,11 @@ const props = defineProps({
 
 // 默认只显示前 PREVIEW_COUNT 个，避免文件夹一多就把卡片拉得很长；
 // 超出部分收成一条「展开全部 N 个」，展开状态按文件夹记住。
-const expanded = computed(() => isGridExpanded(props.parentId))
+// 例外：正在按标签筛选时不折叠 —— 用户是主动要看全部命中项。
+const expanded = computed(() => isGridExpanded(props.parentId) || !!store.tagFilter)
 const hiddenCount = computed(() => Math.max(0, props.nodes.length - PREVIEW_COUNT))
-const visible = computed(() =>
-  expanded.value || !hiddenCount.value ? props.nodes : props.nodes.slice(0, PREVIEW_COUNT),
-)
+const hiding = computed(() => hiddenCount.value > 0 && !expanded.value)
+const visible = computed(() => (hiding.value ? props.nodes.slice(0, PREVIEW_COUNT) : props.nodes))
 </script>
 
 <template>
@@ -26,7 +26,7 @@ const visible = computed(() =>
       :parent-id="parentId"
     />
     <button
-      v-if="hiddenCount"
+      v-if="hiddenCount && !store.tagFilter"
       class="grid-more"
       type="button"
       :title="expanded ? '收起，只显示前 ' + PREVIEW_COUNT + ' 个' : '展开显示全部 ' + nodes.length + ' 个'"

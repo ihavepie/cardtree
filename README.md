@@ -22,7 +22,8 @@
   - 拖拽幽灵 + 数量角标 + 插入指示线
   - 悬停折叠文件夹 **600ms 自动展开**，方便拖进去
   - 拖入自身/后代自动阻止（防循环嵌套）
-- 🔍 **全局搜索**：按标题/网址过滤，点击结果中的文件夹可定位展开到主页
+- 🧭 **看板索引条**：主区顶部（吸顶）一条工具栏 —— 「文件夹」胶囊（含数量）点一下跳转并高亮该分组；「标签」胶囊按标签筛选，只显示带该标签的书签（空文件夹自动剪掉、命中的文件夹自动展开），再点一次或「清除筛选」还原
+- 🔍 **全局搜索**：按标题/网址/标签/描述过滤，点击结果中的文件夹可定位展开到主页（搜索时索引条让位）
 - 🖱️ **单击选中 / 双击打开**：Ctrl/⌘ 多选、Shift 范围选择；Enter 打开、F2 重命名、Delete 删除、Esc 取消
 - ➕ **新建 / 重命名 / 移动 / 删除**：顶栏「新建书签 / 新建文件夹」，右键菜单，支持多选批量移动
 - 🗑️ **回收站**：删除进回收站（软删除），可恢复（原文件夹不在则回到书签栏）或彻底删除 / 清空
@@ -53,6 +54,7 @@ python3 -m http.server 5199 --directory dist &   # 各脚本都从 5199 取页�
 node test/cdp-driver.mjs           # 交互回归：渲染/折叠/拖拽排序/拖入文件夹/嵌套/拖回书签栏/右键/搜索/新建/回收站
 node test/layout-modes-check.mjs   # 文件夹排列：纵排 / 并排的栏数与列轨道、按钮切换、拖拽指示线、持久化
 node test/grid-preview-check.mjs   # 前 N 个 + 展开全部：8→16→8、按钮文案、持久化、拖拽落点
+node test/board-index-check.mjs    # 索引条：文件夹跳转、标签聚合/筛选/再点取消/空态、搜索时让位
 node test/sidebar-diag.mjs 2200 1200           # 侧边栏几何：不同窗口/侧栏宽度下"侧栏↔卡片"间距
 node test/sidebar-firstpaint-check.mjs         # 首帧校验：注入 chrome 桩（storage 延迟 40ms），看刷新时宽度/主题是否跳变
 node test/shot-home.mjs 前缀 1440 940          # 视觉截图（浅色/展开/深色/悬停/拖拽指示线）
@@ -89,7 +91,7 @@ cardtree/
 │       ├── BookmarkGrid.vue   # 书签网格（横排并排 + 前 N 个/展开全部）
 │       ├── BookmarkItem.vue   # 单个书签卡片（选中/拖拽/右键）
 │       ├── CascadeNode.vue    # 文件夹卡片节点（递归，折叠动画）
-│       ├── ContextMenu.vue
+│       ├── ContextMenu.vue    # 右键菜单（布局选项面板也复用它）
 │       ├── AppDialog.vue      # 新建/重命名/移动弹窗
 │       └── TrashPanel.vue     # 回收站侧栏
 ├── tools/gen_icons.py         # 图标生成脚本
@@ -97,6 +99,7 @@ cardtree/
     ├── cdp-driver.mjs         # CDP 交互回归（含数据完整性断言）
     ├── layout-modes-check.mjs # 文件夹排列模式校验
     ├── grid-preview-check.mjs # 前 N 个 + 展开全部校验
+    ├── board-index-check.mjs  # 索引条（文件夹跳转 / 标签筛选）校验
     ├── sidebar-diag.mjs       # 侧边栏间距几何诊断
     ├── sidebar-firstpaint-check.mjs # 侧边栏/主题首帧跳变校验（chrome 桩）
     ├── shot-home.mjs          # 视觉截图
