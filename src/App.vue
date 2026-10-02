@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { computed, ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { store, clearSelection, isCollapsed, toggleCollapse, select, isSelected, loadVideoBlob, setSidebarWidth, filteredRoots, tagIndex, setTagFilter, clearTagFilter, revealNode } from './store.js'
 import { overGrid, onDrop, endDrag } from './drag.js'
 import { closeMenu, menuForEmpty, openSelected, deleteSelected, renameSelected } from './ui.js'
@@ -7,6 +7,8 @@ import { marqueeMouseDown, marqueeMouseMove, marqueeMouseUp, consumeMarqueeClick
 
 import TopBar from './components/TopBar.vue'
 import RecentSection from './components/RecentSection.vue'
+import FrequentSection from './components/FrequentSection.vue'
+import FolderSection from './components/FolderSection.vue'
 import SearchResults from './components/SearchResults.vue'
 import BookmarkGrid from './components/BookmarkGrid.vue'
 import CascadeNode from './components/CascadeNode.vue'
@@ -20,6 +22,49 @@ import IconPicker from './components/IconPicker.vue'
 import Memo from './components/Memo.vue'
 
 const searching = computed(() => store.query.trim().length > 0)
+
+// ---- 滚动联动（scroll spy）：主区滚到哪，侧栏就高亮哪个文件夹 ----
+// 取"已经越过顶部基准线的最后一个文件夹节点" —— 嵌套时自然取到最内层那一个。
+const mainEl = ref(null)
+let spyTimer = 0
+let spyLast = 0
+
+function updateSpy() {
+  const main = mainEl.value
+  if (!main) return
+  if (searching.value || !store.sidebarOpen) {
+    if (store.spyId) store.spyId = null
+    return
+  }
+  // 基准线：主区可见区域顶部再往下一点（越过吸顶的工具条），落在它上面的算"已滚过"
+  const base = main.getBoundingClientRect().top + 110
+  let cur = null
+  for (const el of main.querySelectorAll('.cascade-node[data-id]')) {
+    const top = el.getBoundingClientRect().top
+    if (top <= base) cur = el.dataset.id
+    else break
+  }
+  if (store.spyId !== cur) store.spyId = cur
+}
+
+// 用「时间戳节流 + setTimeout 兜底」而不是 requestAnimationFrame：
+// rAF 在有头/无头环境下的行为不一致（无头下可能一直不触发），滚动联动会彻底不工作。
+// 80ms 一次足够跟手，且末尾一定会有一次更新。
+const SPY_INTERVAL = 80
+function onMainScroll() {
+  const since = Date.now() - spyLast
+  if (since >= SPY_INTERVAL) { spyLast = Date.now(); updateSpy(); return }
+  if (spyTimer) return
+  spyTimer = setTimeout(() => { spyTimer = 0; spyLast = Date.now(); updateSpy() }, SPY_INTERVAL - since)
+}
+
+function scheduleSpy() {
+  if (spyTimer) { clearTimeout(spyTimer); spyTimer = 0 }
+  spyLast = 0
+  onMainScroll()
+}
+
+watch([() => store.query, () => store.roots], scheduleSpy)
 
 const marqueeStyle = computed(() => {
   const m = store.marquee
@@ -88,7 +133,11 @@ const indexFolders = computed(() => {
   return out
 })
 
-const showIndex = computed(() => !searching.value && (indexFolders.value.length > 1 || tagIndex.value.length > 0))
+// 看板索引条：与侧边栏分工，不重复 —— 侧边栏开着时它只做标签筛选；
+// 侧边栏收起时才接管「顶层文件夹跳转」（层级与管理始终归侧边栏）
+const showFolderChips = computed(() => !store.sidebarOpen && indexFolders.value.length > 1)
+
+const showIndex = computed(() => !searching.value && (showFolderChips.value || tagIndex.value.length > 0))
 
 function onEmptyContext(e, parentId) {
   e.preventDefault()
@@ -124,8 +173,15 @@ function onGlobalClick(e) {
   if (consumeMarqueeClick()) return
   if (store.editingNodeId) return
   const t = e.target
-  if (t.closest('.bookmark-item, .cascade-heading, .sf-row, .section-head, .context-menu, .modal, .trash-panel, .bg-panel, .detail-drawer')) return
+  if (t.closest('.bookmark-item, .cascade-heading, .sf-row, .ws-item, .panel-head, .section-head, .context-menu, .modal, .trash-panel, .bg-panel, .detail-drawer')) return
   clearSelection()
+}
+
+// 带动作的提示（例如工作区一键开一组后的「撤销」）：先收起提示，再执行
+function runToastAction() {
+  const action = store.toast?.action
+  store.toast = null
+  if (action && typeof action.run === 'function') action.run()
 }
 
 function onResizeStart(e) {
@@ -198,6 +254,8 @@ onMounted(() => {
   window.addEventListener('mousemove', marqueeMouseMove)
   window.addEventListener('mouseup', marqueeMouseUp)
   initEffects()
+  mainEl.value?.addEventListener('scroll', onMainScroll, { passive: true })
+  nextTick(scheduleSpy)
 })
 
 onBeforeUnmount(() => {
@@ -207,6 +265,8 @@ onBeforeUnmount(() => {
   window.removeEventListener('mousedown', marqueeMouseDown)
   window.removeEventListener('mousemove', marqueeMouseMove)
   window.removeEventListener('mouseup', marqueeMouseUp)
+  mainEl.value?.removeEventListener('scroll', onMainScroll)
+  if (spyTimer) clearTimeout(spyTimer)
   disposeEffects()
 })
 </script>
@@ -234,39 +294,44 @@ onBeforeUnmount(() => {
       <Sidebar />
       <div v-if="store.sidebarOpen" class="sidebar-resizer" title="拖拽调整侧边栏宽度" @mousedown="onResizeStart"></div>
 
-      <main class="main">
+      <main ref="mainEl" class="main">
       <!-- 看板索引条：文件夹跳转 + 标签筛选。放在 .main-inner 之外，避免破坏其 auto-fit 网格
            （索引条一旦跨列，auto-fit 的空轨道就不再折叠，根卡片会被压成一条轨道） -->
       <nav v-if="showIndex" class="board-index">
-        <div v-if="indexFolders.length > 1" class="idx-group">
+        <div v-if="showFolderChips" class="idx-group">
           <span class="idx-label">文件夹</span>
-          <button
-            v-for="f in indexFolders"
-            :key="f.id"
-            class="idx-chip"
-            type="button"
-            :title="`跳转到「${f.title || '未命名'}」`"
-            @click="revealNode(f.id)"
-          >
-            {{ f.title || '未命名' }}<span class="idx-count">{{ (f.children || []).length }}</span>
-          </button>
+          <div class="idx-chips">
+            <button
+              v-for="f in indexFolders"
+              :key="f.id"
+              class="idx-chip"
+              type="button"
+              :title="`跳转到「${f.title || '未命名'}」（侧边栏收起时才显示，层级管理用侧边栏）`"
+              @click="revealNode(f.id)"
+            >
+              {{ f.title || '未命名' }}<span class="idx-count">{{ (f.children || []).length }}</span>
+            </button>
+          </div>
         </div>
-        <span v-if="indexFolders.length > 1 && tagIndex.length" class="idx-sep"></span>
+        <span v-if="showFolderChips && tagIndex.length" class="idx-sep"></span>
         <div v-if="tagIndex.length" class="idx-group">
           <span class="idx-label">标签</span>
-          <button
-            v-for="t in tagIndex"
-            :key="t.tag"
-            class="idx-chip"
-            :class="{ active: store.tagFilter === t.tag }"
-            type="button"
-            :title="store.tagFilter === t.tag ? '取消筛选' : `只看带「${t.tag}」的书签`"
-            @click="setTagFilter(t.tag)"
-          >
-            {{ t.tag }}<span class="idx-count">{{ t.count }}</span>
-          </button>
-          <button v-if="store.tagFilter" class="idx-clear" type="button" @click="clearTagFilter">清除筛选</button>
+          <div class="idx-chips">
+            <button
+              v-for="t in tagIndex"
+              :key="t.tag"
+              class="idx-chip"
+              :class="{ active: store.tagFilter === t.tag }"
+              type="button"
+              :title="store.tagFilter === t.tag ? '取消筛选' : `只看带「${t.tag}」的书签`"
+              @click="setTagFilter(t.tag)"
+            >
+              {{ t.tag }}<span class="idx-count">{{ t.count }}</span>
+            </button>
+            <button v-if="store.tagFilter" class="idx-clear" type="button" @click="clearTagFilter">清除筛选</button>
+          </div>
         </div>
+
       </nav>
 
       <div class="main-inner">
@@ -295,6 +360,9 @@ onBeforeUnmount(() => {
               @contextmenu="onEmptyContext($event, root.id)"
             >
               <RecentSection v-if="store.recent.length" />
+              <FrequentSection />
+              <!-- 「文件夹」小标题：给下面这块（网址网格 + 文件夹卡片）起名，本身不再列跳转胶囊 -->
+              <FolderSection :root="root" />
               <template v-if="(root.children || []).length">
                 <BookmarkGrid
                   v-if="(root.children || []).filter((c) => c.url).length"
@@ -347,8 +415,14 @@ onBeforeUnmount(() => {
     <IconPicker />
     <Memo />
 
-    <div v-if="store.toast" class="toast" :class="{ warning: store.toast.type === 'warning' }">
-      {{ store.toast.msg }}
+    <div v-if="store.toast" class="toast" :class="{ warning: store.toast.type === 'warning', 'has-action': !!store.toast.action }">
+      <span class="toast-msg">{{ store.toast.msg }}</span>
+      <button
+        v-if="store.toast.action"
+        class="toast-action"
+        type="button"
+        @click="runToastAction"
+      >{{ store.toast.action.label }}</button>
     </div>
   </div>
 </template>

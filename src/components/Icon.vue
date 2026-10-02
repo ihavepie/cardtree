@@ -197,5 +197,15 @@ const props = defineProps({
       <path d="M3 18l1.5 1.5L7 17" />
       <path d="M11 6h10M11 12h10M11 18h10" />
     </template>
+    <template v-else-if="name === 'more'">
+      <circle cx="5" cy="12" r="1.4" />
+      <circle cx="12" cy="12" r="1.4" />
+      <circle cx="19" cy="12" r="1.4" />
+    </template>
+    <template v-else-if="name === 'layers'">
+      <path d="M12 2 2 7l10 5 10-5-10-5z" />
+      <path d="M2 17l10 5 10-5" />
+      <path d="M2 12l10 5 10-5" />
+    </template>
   </svg>
 </template>

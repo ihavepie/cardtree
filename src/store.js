@@ -2,7 +2,7 @@
 
 import { reactive, computed, watch, nextTick } from 'vue'
 import { bm, subscribe, isExtension } from './bookmarks.js'
-import { debounce, isFolder, clamp } from './utils.js'
+import { debounce, isFolder, clamp, uid } from './utils.js'
 
 // ---------------------------------------------------------------- 持久化适配
 function storageGet(key, fallback) {
@@ -93,8 +93,14 @@ export const store = reactive({
   recent: [],              // 最近打开
   trash: [],               // 回收站（软删除快照）
   trashOpen: false,
+  workspaces: [],          // 工作区：[{ id, name, icon, items: [{title, url}] }] —— 一键打开一组网站
+  wsExpanded: new Set(),   // 已展开（看得到组内每个标签页）的工作区 id
+  panelSplit: 0.33,                            // 两张卡都展开时，上面那张的高度上限（占侧栏可用高度）
   sidebarOpen: true,       // 侧边栏是否展开
   sidebarWidth: syncReadSidebarWidth(), // 侧边栏宽度（可拖拽拉伸）·初值取自同步镜像，避免刷新跳一下
+  dragExpandAll: false,    // 拖拽期间：临时把侧栏整棵树展开，落点不再随悬停展开而漂移（拖完还原）
+  sidebarFocusId: null,    // 侧栏文件夹树里当前拥有 Tab 焦点的行（roving tabindex）
+  spyId: null,             // 滚动联动：主区当前正在看的那个文件夹 id
   bg: null,                // 背景：null | {type:'custom', id} | {type:'animated'}
   bgPanelOpen: false,      // 背景设置面板
   customBackgrounds: [],   // 自定义背景栏位：[{id, name, type:'image'|'color'|'gradient', ...}]
@@ -126,8 +132,13 @@ export const store = reactive({
 })
 
 // ---------------------------------------------------------------- 加载
+// url → 书签节点（同一网址收藏了多次时取第一个）。老工作区数据只有 {title,url}，
+// 认领 id / 判断"书签是不是真被删了"都要靠它。
+let flatByUrl = new Map()
+
 function rebuildIndex() {
   const map = new Map()
+  const byUrl = new Map()
   const flat = []
   const walk = (node, parentId) => {
     node.parentId = parentId
@@ -137,6 +148,7 @@ function rebuildIndex() {
     for (const b of kids.filter((c) => c.url)) {
       b.parentId = node.id
       map.set(b.id, b)
+      if (!byUrl.has(b.url)) byUrl.set(b.url, b)
       flat.push(b)
     }
     for (const f of kids.filter((c) => !c.url)) {
@@ -147,6 +159,10 @@ function rebuildIndex() {
   for (const r of store.roots) walk(r, null)
   store.nodesMap = map
   store.flatList = flat
+  flatByUrl = byUrl
+  // 每次树变了都补一次：老数据补 id、快照刷新成当前标题
+  backfillWorkspaceIds()
+  refreshWorkspaceSnapshots()
 }
 
 export async function load() {
@@ -617,6 +633,302 @@ export function clearRecent() {
   store.recent = []
 }
 
+// ---------------------------------------------------------------- 工作区（一键打开一组网站）
+// 零权限版：组里存的是 {title, url} 快照，不是 bookmarkId ——
+// 工作区的语义是"我要开的这几个站"，不该因为你之后整理/删掉那个书签就跟着散架。
+const WS_ICONS = ['briefcase', 'zap', 'globe', 'star', 'book', 'code', 'coffee', 'chart']
+
+function collectBookmarks(node, out, seen) {
+  for (const c of node.children || []) {
+    if (c.url) {
+      if (!seen.has(c.id)) { seen.add(c.id); out.push(c) }
+    } else {
+      collectBookmarks(c, out, seen)
+    }
+  }
+}
+
+/**
+ * 把一批 id 展开成"能打开的书签"：书签直接用，文件夹递归收集里面的书签，按 id 去重。
+ * 选中项入口和拖拽落点入口共用（拖文件夹进工作区 = 把里面的书签都加进去）。
+ */
+export function bookmarkNodesOf(ids) {
+  const out = []
+  const seen = new Set()
+  for (const id of ids || []) {
+    const n = nodeById(id)
+    if (!n) continue
+    if (n.url) {
+      if (!seen.has(n.id)) { seen.add(n.id); out.push(n) }
+    } else {
+      collectBookmarks(n, out, seen)
+    }
+  }
+  return out
+}
+
+/**
+ * 当前选中能打开的书签。
+ * 选中**文件夹**时递归收集里面的书签 —— 以前只收 `n.url` 的节点，
+ * 选一个装着 20 个书签的文件夹会得到"没选中书签"，用户完全不知道为什么。
+ */
+export function selectedBookmarkNodes() {
+  return bookmarkNodesOf(topLevelSelection())
+}
+
+/**
+ * 组里的条目：存 `{ id, title, url }`，其中 url/title 是**快照兜底**。
+ * 渲染与打开时优先用 id 去书签树里取**当前**的标题与网址：
+ *   - 书签改了名 / 改了网址 → 工作区跟着变（以前永远是旧标题）
+ *   - 书签被删了 → 退回快照，工作区不散架（这是当初存快照的初衷）
+ * 取不到 id 的老条目按 url 再认一次，避免"书签明明还在，却被打上「已删除」"。
+ */
+export function workspaceItemsOf(ws) {
+  return (ws.items || []).map((it, i) => {
+    let live = it.id ? nodeById(it.id) : null
+    if ((!live || !live.url) && it.url) live = flatByUrl.get(it.url) || null
+    if (live && !live.url) live = null
+    return {
+      key: it.id || it.url || String(i),
+      id: (live && live.id) || it.id || null,
+      title: (live && live.title) || it.title || it.url || '',
+      url: (live && live.url) || it.url || '',
+      storedUrl: it.url || '',
+      // 只有"确实找不到这个书签"才算已删除；没有 id 的老条目按 url 找得到就是活的
+      missing: !live,
+    }
+  })
+}
+
+/** 往工作区里塞书签（按 url 去重）；建组和"加入选中项"共用这一条逻辑 */
+function mergeIntoWorkspace(ws, nodes) {
+  const seen = new Set((ws.items || []).map((i) => i.url))
+  let added = 0
+  for (const n of nodes) {
+    if (!n || !n.url || seen.has(n.url)) continue
+    seen.add(n.url)
+    ws.items.push({ id: n.id, title: n.title || n.url, url: n.url })
+    added++
+  }
+  return added
+}
+
+/**
+ * 刷新组里条目的快照：凡是有 id 且书签还存在的，把 title/url 更新成当前值。
+ * 这样"改名后又删掉"也不会退回最初的旧名字（快照只在加入时写过一次，会过期）。
+ * 挂在每次 load() 之后，所以连"在浏览器自带书签管理器里改名"也会跟上。
+ */
+function refreshWorkspaceSnapshots() {
+  let changed = false
+  for (const ws of store.workspaces) {
+    for (const it of ws.items || []) {
+      if (!it.id) continue
+      const n = nodeById(it.id)
+      if (!n || !n.url) continue
+      const t = n.title || n.url
+      if (it.title !== t || it.url !== n.url) { it.title = t; it.url = n.url; changed = true }
+    }
+  }
+  if (changed) store.workspaces = [...store.workspaces]
+}
+
+/** 老数据没有 id：按 url 反查一次补上，之后就跟着书签改名了 */
+function backfillWorkspaceIds() {
+  let changed = false
+  for (const ws of store.workspaces) {
+    for (const it of ws.items || []) {
+      if (it.id && nodeById(it.id)) continue
+      const n = it.url ? flatByUrl.get(it.url) : null
+      if (n) { it.id = n.id; changed = true }
+    }
+  }
+  if (changed) store.workspaces = [...store.workspaces]
+}
+
+export function createWorkspace(name, nodes = []) {
+  const ws = {
+    id: uid('ws'),
+    name: String(name || '').trim() || '新工作区',
+    icon: WS_ICONS[store.workspaces.length % WS_ICONS.length],
+    items: [],
+  }
+  mergeIntoWorkspace(ws, nodes)
+  store.workspaces = [...store.workspaces, ws]
+  return ws
+}
+
+export function renameWorkspace(id, name) {
+  const ws = store.workspaces.find((w) => w.id === id)
+  if (!ws) return false
+  ws.name = String(name || '').trim() || ws.name
+  store.workspaces = [...store.workspaces]
+  return true
+}
+
+export function deleteWorkspace(id) {
+  const n = store.workspaces.length
+  store.workspaces = store.workspaces.filter((w) => w.id !== id)
+  store.wsExpanded.delete(id)
+  return store.workspaces.length !== n
+}
+
+/** 展开 / 收起某个工作区（展开后能看到组内每一个标签页，逐个打开） */
+export function toggleWorkspaceExpand(id) {
+  if (store.wsExpanded.has(id)) store.wsExpanded.delete(id)
+  else store.wsExpanded.add(id)
+}
+
+// ---- 卡片布局：只剩高度分配（上下顺序固定：工作区在上、文件夹在下）----
+// 曾经的"拖标题栏/拖拽条换位"已整体移除：面板交换的收益不值那套机制
+// （拖拽条 + 幽灵块 + 落点高亮 + 顺序持久化），两卡职责本来就固定 ——
+// 上面是"我要打开的"，下面是"我要整理的"。
+const SPLIT_MIN = 0.15
+const SPLIT_MAX = 0.8
+
+/** 上面那张卡的高度上限（占侧栏可用高度的比例） */
+export function setPanelSplit(v) {
+  const n = Number(v)
+  if (!Number.isFinite(n)) return
+  store.panelSplit = Math.min(SPLIT_MAX, Math.max(SPLIT_MIN, n))
+}
+
+/** 规范化分栏比例（存储里可能是旧数据 / 被手改过） */
+function normalizePanelLayout(rawSplit) {
+  const sp = Number(rawSplit)
+  store.panelSplit = Number.isFinite(sp) ? Math.min(SPLIT_MAX, Math.max(SPLIT_MIN, sp)) : 0.33
+}
+
+/** 把当前选中的书签加进工作区（按 url 去重），返回新增条数；-1 表示没选中东西 */
+/**
+ * 把一批节点加进工作区：落库 + 顺手展开 + 统一反馈。
+ * **「＋」按钮和"把书签/文件夹拖到工作区行上"两条路径共用这一条**，文案也共用。
+ * ids 里可以是文件夹（递归收集里面的书签）。
+ * 返回加进去的条数：-1 = 这批里没有可打开的书签；0 = 都已经在组里了。
+ */
+export function addNodesToWorkspace(id, ids, { emptyHint } = {}) {
+  const ws = store.workspaces.find((w) => w.id === id)
+  if (!ws) return -1
+  const nodes = bookmarkNodesOf(ids)
+  if (!nodes.length) {
+    if (emptyHint) toast(emptyHint, 'warning')
+    return -1
+  }
+  const added = mergeIntoWorkspace(ws, nodes)
+  store.workspaces = [...store.workspaces]
+  if (!added) {
+    toast(`「${ws.name}」里已经有这些书签了`, 'warning')
+    return 0
+  }
+  // 加完顺手展开，让你确认加对了
+  if (!store.wsExpanded.has(ws.id)) store.wsExpanded.add(ws.id)
+  toast(`已加进「${ws.name}」：${added} 项（共 ${ws.items.length} 项）`)
+  return added
+}
+
+export function addSelectionToWorkspace(id) {
+  return addNodesToWorkspace(id, topLevelSelection(), {
+    emptyHint: '先选中要加进来的书签，再点「＋」',
+  })
+}
+
+/**
+ * 从工作区里移除一项。
+ * 以前只按 url 匹配、而传进来的是**当前** url：书签改过网址（或条目只有快照）时
+ * 「✕」点了没反应 —— 看着就是"移除功能坏了"。现在 id / 当前 url / 快照 url 命中任一即可，
+ * 所以既不会误删，也不会点不动。target 可以是 workspaceItemsOf() 的条目，也可以直接给 url 字符串。
+ */
+export function removeFromWorkspace(id, target) {
+  const ws = store.workspaces.find((w) => w.id === id)
+  if (!ws) return false
+  const t = typeof target === 'string' ? { url: target } : (target || {})
+  const before = ws.items.length
+  ws.items = ws.items.filter((i) => {
+    if (t.id && i.id && i.id === t.id) return false
+    if (t.url && i.url === t.url) return false
+    if (t.storedUrl && i.url === t.storedUrl) return false
+    return true
+  })
+  store.workspaces = [...store.workspaces]
+  return ws.items.length !== before
+}
+
+// chrome.tabs.create / remove 属于基础能力，**不需要 `tabs` 权限**
+// （`tabs` 权限是为了读取 url / title 这类敏感字段）。所以工作区不用扩权就能一键开一组。
+function createTab(url) {
+  return new Promise((resolve) => {
+    let settled = false
+    const done = (t) => { if (!settled) { settled = true; resolve(t || null) } }
+    try {
+      const ret = chrome.tabs.create({ url, active: false }, done)
+      if (ret && typeof ret.then === 'function') ret.then(done, () => done(null))
+      setTimeout(() => done(null), 2000)   // 兜底：别把撤销提示卡在这
+    } catch {
+      done(null)
+    }
+  })
+}
+
+/** 打开整组：扩展环境走后标签逐个 create，非扩展环境回退 window.open。
+ *  返回 { ids, opened, failed }：以前只要有一个成功就报"已打开 N 个"，
+ *  全部失败时也照报，用户会以为开了其实没开。 */
+async function openUrls(urls) {
+  const hasTabs = typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create
+  if (!hasTabs) {
+    let opened = 0
+    urls.forEach((u) => { try { window.open(u, '_blank', 'noopener'); opened++ } catch { /* ignore */ } })
+    return { ids: [], opened, failed: urls.length - opened }
+  }
+  const ids = []
+  for (const url of urls) {
+    const tab = await createTab(url)
+    if (tab && tab.id != null) ids.push(tab.id)
+  }
+  return { ids, opened: ids.length, failed: urls.length - ids.length }
+}
+
+export async function openWorkspace(id) {
+  const ws = store.workspaces.find((w) => w.id === id)
+  if (!ws) return
+  const items = workspaceItemsOf(ws)
+  if (!items.length) {
+    toast('这个工作区还是空的：先选中书签，再点它右边的「＋」', 'warning')
+    return
+  }
+  const { ids, opened, failed } = await openUrls(items.map((i) => i.url))
+  const n = items.length
+  if (!opened) {
+    toast(`「${ws.name}」的 ${n} 个网站都没打开成功`, 'warning')
+    return
+  }
+  const msg = failed
+    ? `「${ws.name}」打开了 ${opened}/${n} 个（${failed} 个失败）`
+    : `已打开「${ws.name}」的 ${n} 个网站`
+  if (ids.length) {
+    // 一次开一堆标签是有副作用的动作，所以必须给后悔的机会
+    toast(msg, failed ? 'warning' : 'info', {
+      label: '撤销',
+      run: () => {
+        try { chrome.tabs.remove(ids) } catch { /* ignore */ }
+        toast('已关闭刚打开的标签')
+      },
+    })
+  } else {
+    toast(msg, failed ? 'warning' : 'info')
+  }
+}
+
+/** 打开组内的单个标签页（后台）。单击某个具体标签页的语义就是"我要这一个"，不该顺带开全部 */
+export async function openWorkspaceItem(item) {
+  if (!item || !item.url) return
+  const hasTabs = typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create
+  if (hasTabs) {
+    await createTab(item.url)
+  } else {
+    window.open(item.url, '_blank', 'noopener')
+  }
+}
+
+
 // ---------------------------------------------------------------- 搜索
 export const searchResults = computed(() => {  const q = store.query.trim().toLowerCase()
   if (!q) return []
@@ -733,11 +1045,37 @@ export function scrollToNode(id) {
   })
 }
 
+// ---------------------------------------------------------------- 侧栏键盘焦点 / 滚动联动
+export function setSidebarFocus(id) {
+  store.sidebarFocusId = id || null
+}
+
+/** 焦点 id 失效（文件夹被删/改名）时，回落到第一个根文件夹 */
+export function ensureSidebarFocus() {
+  const id = store.sidebarFocusId
+  if (id && nodeById(id) && !nodeById(id).url) return
+  store.sidebarFocusId = store.roots[0]?.id || null
+}
+
+// ---------------------------------------------------------------- 常用（按打开次数）
+/** 打开次数最多的书签（数据一直在记，之前只有详情抽屉读它） */
+export const frequentBookmarks = computed(() => {
+  const out = []
+  for (const n of store.flatList) {
+    if (!n.url) continue
+    const st = store.nodeStats[n.id]
+    if (st && st.count > 0) out.push({ node: n, count: st.count, lastOpenedAt: st.lastOpenedAt || 0 })
+  }
+  out.sort((a, b) => b.count - a.count || b.lastOpenedAt - a.lastOpenedAt)
+  return out.slice(0, 10)   // 一屏放得下 10 个左右（原来 8 个）
+})
+
 // ---------------------------------------------------------------- 提示
-export function toast(msg, type = 'info') {
-  store.toast = { msg, type }
+// action: { label, run } —— 给有副作用的操作留一条后路（例如工作区一键开一组后的「撤销」）
+export function toast(msg, type = 'info', action = null) {
+  store.toast = { msg, type, action }
   if (window.__toastTimer) clearTimeout(window.__toastTimer)
-  window.__toastTimer = setTimeout(() => (store.toast = null), 2200)
+  window.__toastTimer = setTimeout(() => (store.toast = null), action ? 6000 : 2200)
 }
 
 // ---------------------------------------------------------------- 背景
@@ -865,7 +1203,7 @@ if (!isExtension) {
 export async function init() {
   let initCollapsed = false
   try {
-    const [c, r, t, done, bg, theme, customBackgrounds, nodeMeta, nodeStats, sidebarWidth, memos, memoState, memoStrokes, layoutMode, expandedGrids] = await Promise.all([
+    const [c, r, t, done, bg, theme, customBackgrounds, nodeMeta, nodeStats, sidebarWidth, memos, memoState, memoStrokes, layoutMode, expandedGrids, workspaces, wsExpanded, panelSplit] = await Promise.all([
       storageGet('collapsed', []),
       storageGet('recent', []),
       storageGet('trash', []),
@@ -881,6 +1219,9 @@ export async function init() {
       storageGet('memoStrokes', []),
       storageGet('layoutMode', 'stack'),
       storageGet('expandedGrids', []),
+      storageGet('workspaces', []),
+      storageGet('wsExpanded', []),
+      storageGet('panelSplit', 0.33),
     ])
     const toArray = (v) => {
       if (Array.isArray(v)) return v
@@ -892,6 +1233,18 @@ export async function init() {
     store.expandedGrids = new Set(Array.isArray(expandedGrids) ? expandedGrids : [])
     store.recent = toArray(r)
     store.trash = toArray(t)
+    store.workspaces = toArray(workspaces)
+      .filter((w) => w && typeof w === 'object')
+      .map((w) => ({
+        id: w.id || uid('ws'),
+        name: String(w.name || '未命名工作区'),
+        icon: WS_ICONS.includes(w.icon) ? w.icon : 'briefcase',
+        items: (Array.isArray(w.items) ? w.items : [])
+          .filter((i) => i && typeof i.url === 'string' && i.url)
+          .map((i) => ({ title: String(i.title || i.url), url: i.url })),
+      }))
+    store.wsExpanded = new Set(toArray(wsExpanded))
+    normalizePanelLayout(panelSplit)
     store.bg = bg || null
     store.theme = theme === 'dark' ? 'dark' : 'light'
     store.layoutMode = isLayoutMode(layoutMode) ? layoutMode : 'stack'
@@ -930,6 +1283,9 @@ export async function init() {
   )
   watch(() => store.recent, (v) => storageSet('recent', v), { deep: true })
   watch(() => store.trash, (v) => storageSet('trash', v), { deep: true })
+  watch(() => store.workspaces, (v) => storageSet('workspaces', v), { deep: true })
+  watch(() => Array.from(store.wsExpanded), (v) => storageSet('wsExpanded', v))
+  watch(() => store.panelSplit, (v) => storageSet('panelSplit', v))
   watch(() => store.bg, (v) => storageSet('bg', v))
   watch(() => store.customBackgrounds, (v) => storageSet('customBackgrounds', v), { deep: true })
   watch(() => store.nodeMeta, (v) => storageSet('nodeMeta', v), { deep: true })

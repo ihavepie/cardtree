@@ -3,10 +3,13 @@
    ============================================================ */
 
 :root {
-  /* ===== 品牌强调色 ===== */
-  --accent: #6366f1;
-  --accent-strong: #4f46e5;
-  --accent-soft: rgba(99, 102, 241, 0.12);
+  /* ===== 主题色：钢蓝（steel blue）=====
+     一路从"靛蓝 #6366f1（显紫）" → "中性石墨（没颜色）" → 现在这个"钢蓝"：
+     和石板灰同族、饱和度压到 ~40%，既看得出是主题色，又不会像靛蓝那样在 hover/选中时"发紫"。
+     它只用在：选中框、落点环、焦点环、计数徽标、滚动联动条、图标底色、环境光。 */
+  --accent: #3f7cae;
+  --accent-strong: #2f6389;
+  --accent-soft: rgba(63, 124, 174, 0.14);
   --btn-primary-bg: #1f2937;
   --btn-primary-hover: #111827;
   --btn-primary-fg: #ffffff;
@@ -28,9 +31,38 @@
   --font-md: 13px;
   --font-lg: 14.5px;
 
-  /* ===== 圆角 ===== */
-  --radius: 12px;
-  --radius-sm: 8px;
+  /* ===== 圆角：原来散着 14 种值，收敛成这几档 ===== */
+  --r-xs: 5px;     /* 小图标按钮 */
+  --r-sm: 6px;     /* 内层 chip / 行内条目 */
+  --r-md: 9px;     /* 块 / 工具条 */
+  --r-lg: 14px;    /* 卡片（原来 12px，略圆一档更柔） */
+  --r-xl: 18px;    /* 大面板 / 便签球 */
+  --r-pill: 999px; /* 计数徽标 / 胶囊 */
+  /* 兼容旧引用 */
+  --radius: var(--r-lg);
+  --radius-sm: var(--r-md);
+  /* ===== 交互态（浅色）=====
+     hover 的方向是"**往白里提亮**"（毛玻璃上的高光），不是"压一层灰" —— 这是这次的观感调整。
+     文字同步变深（--hover-fg），所以白底上依然读得清。
+     但**近实底**的面板（右键菜单 / 详情抽屉 / 弹窗 / 便签 / 背景面板，底色是 --panel-bg ≈ 0.94 白）
+     上，白色悬停等于没有，所以另有一组 `-solid` 令牌（压灰）给它们用。 */
+  --hover-bg: rgba(255, 255, 255, 0.5);          /* 玻璃卡上的行 / chip */
+  --hover-bg-strong: rgba(255, 255, 255, 0.68);  /* 大块（卡片、菜单项、按钮） */
+  --hover-fg: #0f172a;                           /* 悬停时的文字色：比正文更深，不是变色相 */
+  --active-bg: rgba(255, 255, 255, 0.88);        /* 按下：再白一档 */
+  --hover-bg-solid: rgba(15, 23, 42, 0.055);     /* 近实底面板里的悬停 */
+  --hover-bg-solid-strong: rgba(15, 23, 42, 0.085);
+  --active-bg-solid: rgba(15, 23, 42, 0.11);
+  --hover-border: rgba(255, 255, 255, 0.85);
+  --focus-ring: rgba(63, 124, 174, 0.75);        /* 焦点环 = 主题色 */
+  --btn-ghost-white: rgba(255, 255, 255, 0.72);  /* 「＋ 新建」这类"白色小按钮" */
+  --btn-ghost-white-hover: #ffffff;
+  --btn-ghost-white-border: rgba(255, 255, 255, 0.9);
+  --btn-hover-bg: rgba(255, 255, 255, 0.62);     /* 顶栏玻璃按钮的悬停底（同样往白里走） */
+  --btn-hover-border: rgba(255, 255, 255, 0.95);
+  --sel-bg: rgba(63, 124, 174, 0.16);            /* 选中底：主题色淡淡一层 */
+  --sel-bg-strong: rgba(63, 124, 174, 0.26);
+  --danger-soft: rgba(239, 68, 68, 0.14);
 
   /* ===== 玻璃 ===== */
   --glass-bg: rgba(255, 255, 255, 0.5);
@@ -39,18 +71,22 @@
   --glass-blur: 24px;
 
   /* ===== 阴影 ===== */
-  --shadow: 0 8px 30px rgba(67, 74, 148, 0.1);
-  --shadow-hover: 0 3px 10px rgba(67, 74, 148, 0.16);
-  --card-shadow: 0 10px 28px rgba(67, 74, 148, 0.12), 0 2px 6px rgba(30, 41, 59, 0.06);
-  --hover-shadow: 0 3px 8px rgba(67, 74, 148, 0.2);
+  --shadow: 0 8px 30px rgba(30, 41, 59, 0.1);
+  --shadow-hover: 0 3px 10px rgba(30, 41, 59, 0.14);
+  /* 投影：足迹略微收一点（-12px），别让 blur 28 的投影往上下各糊 20+px 叠进两张卡之间那道缝 */
+  --card-shadow: 0 10px 26px -12px rgba(30, 41, 59, 0.22), 0 1px 3px rgba(30, 41, 59, 0.05);
+  --hover-shadow: 0 3px 8px rgba(15, 23, 42, 0.12);   /* 悬停投影也去色，别带靛蓝 */
+
+  /* ===== 侧栏选中态 ===== */
+  --sel-frame: rgba(100, 116, 139, 0.5);     /* 选中框：淡色中性描边（不带紫） */
 
   /* ===== 状态色 ===== */
-  --card-bg: rgba(255, 255, 255, 0.2);
-  --chip-hover: rgba(255, 255, 255, 0.85);
-  --row-hover: rgba(99, 102, 241, 0.12);
-  --row-selected: rgba(99, 102, 241, 0.18);
-  --sel-chip: rgba(99, 102, 241, 0.22);
-  --sel-folder: rgba(99, 102, 241, 0.12);
+  --card-bg: rgba(255, 255, 255, 0.26);        /* 0.2 → 0.26：卡片更「实」一点，和缝里露出的原始背景色差更小 */
+  --card-border: rgba(255, 255, 255, 0.5);     /* 玻璃边：卡片轮廓立起来，缝才读成「两道边」而不是一条灰带 */
+  --row-hover: var(--hover-bg);            /* 兼容旧引用：全站悬停底 */
+  --row-selected: var(--sel-bg);
+  --sel-chip: var(--sel-bg-strong);
+  --sel-folder: var(--sel-bg);
   --btn-bg: rgba(148, 163, 184, 0.14);
   --btn-border: rgba(148, 163, 184, 0.28);
   --panel-bg: rgba(255, 255, 255, 0.94);
@@ -63,7 +99,7 @@ button:focus-visible,
 a:focus-visible,
 select:focus-visible,
 [role="button"]:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
@@ -78,11 +114,13 @@ body {
     "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
   color: var(--text);
   font-variant-numeric: tabular-nums;
-  /* 单一靛蓝环境光 + 中性底，让毛玻璃通透而不脏 */
+  /* 中性环境光（原来是两团靛蓝/紫） + 冷灰底，毛玻璃照样通透 */
+  /* 浅色底：整体抬亮一点、少一点灰 —— 卡片之间/周围露出的就是它，
+     底色越接近卡片，缝越不像「脏印子」（这也是「不要填缝」之后的正解） */
   background:
-    radial-gradient(1100px 560px at 8% -8%, rgba(129, 140, 248, 0.32), transparent 60%),
-    radial-gradient(900px 620px at 100% 0%, rgba(165, 180, 252, 0.22), transparent 58%),
-    linear-gradient(165deg, #eef1f8 0%, #f6f7fb 48%, #eceffa 100%);
+    radial-gradient(1100px 560px at 8% -8%, rgba(63, 124, 174, 0.1), transparent 60%),
+    radial-gradient(900px 620px at 100% 0%, rgba(138, 184, 221, 0.14), transparent 58%),
+    linear-gradient(165deg, #f3f6fa 0%, #fafcfe 48%, #f0f4f8 100%);
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
 }
@@ -94,7 +132,7 @@ body::after {
   inset: 0;
   z-index: 2000;
   pointer-events: none;
-  opacity: 0.035;
+  opacity: 0.022;   /* 噪点 0.035 → 0.022：它叠在缝里会加重「脏」的感觉 */
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
@@ -102,34 +140,57 @@ body::after {
 body[data-theme="dark"] {
   --text: #e2e8f0;
   --text-2: #94a3b8;
-  --text-3: #64748b;
-  --accent: #818cf8;
-  --accent-strong: #a5b4fc;
-  --accent-soft: rgba(99, 102, 241, 0.2);
+  --text-3: #7b8a9e;   /* 深色下的三级文字（计数/提示）原来偏暗，提亮一档 */
+  --accent: #8ab8dd;
+  --accent-strong: #b3d4ee;
+  --accent-soft: rgba(138, 184, 221, 0.18);
   --btn-primary-bg: #e2e8f0;
   --btn-primary-hover: #f8fafc;
   --btn-primary-fg: #0f172a;
-  --card-bg: rgba(30, 41, 59, 0.5);
-  --chip-hover: rgba(51, 65, 85, 0.8);
-  --row-hover: rgba(99, 102, 241, 0.22);
-  --row-selected: rgba(99, 102, 241, 0.3);
-  --sel-chip: rgba(99, 102, 241, 0.38);
-  --sel-folder: rgba(99, 102, 241, 0.22);
+  --card-bg: rgba(38, 50, 69, 0.55);           /* 比原来亮一档：深色下卡片与背景的层次更清楚 */
+  --card-border: rgba(255, 255, 255, 0.07);    /* 深色里的玻璃边：很淡，但足够把卡片从近黑底上「切」出来 */
+  /* 深色交互态：方向本来就是"提亮"，和浅色现在的白高光正好同向；
+     近实底面板（--panel-bg ≈ 0.95 深色）上同样是提亮，只是幅度小一点 */
+  --hover-bg: rgba(255, 255, 255, 0.075);
+  --hover-bg-strong: rgba(255, 255, 255, 0.12);
+  --hover-fg: #f8fafc;
+  --active-bg: rgba(255, 255, 255, 0.17);
+  --hover-bg-solid: rgba(255, 255, 255, 0.07);
+  --hover-bg-solid-strong: rgba(255, 255, 255, 0.11);
+  --active-bg-solid: rgba(255, 255, 255, 0.15);
+  --hover-border: rgba(255, 255, 255, 0.18);
+  --focus-ring: rgba(138, 184, 221, 0.85);
+  /* 深色下"白按钮"退成一枚浅色玻璃片：纯白在深色卡上会跳出来 */
+  --btn-ghost-white: rgba(255, 255, 255, 0.14);
+  --btn-ghost-white-hover: rgba(255, 255, 255, 0.22);
+  --btn-ghost-white-border: rgba(255, 255, 255, 0.16);
+  --btn-hover-bg: rgba(255, 255, 255, 0.14);
+  --btn-hover-border: rgba(255, 255, 255, 0.25);
+  --sel-bg: rgba(138, 184, 221, 0.2);
+  --sel-bg-strong: rgba(138, 184, 221, 0.3);
+  --row-hover: var(--hover-bg);
+  --row-selected: var(--sel-bg);
+  --sel-chip: var(--sel-bg-strong);
+  --sel-folder: var(--sel-bg);
   --btn-bg: rgba(148, 163, 184, 0.16);
   --btn-border: rgba(148, 163, 184, 0.3);
   --panel-bg: rgba(30, 41, 59, 0.95);
-  --card-shadow: 4px 8px 16px rgba(0, 0, 0, 0.4), 8px 16px 32px rgba(0, 0, 0, 0.5);
-  --hover-shadow: 0 3px 6px rgba(0, 0, 0, 0.5);
+  --sel-frame: rgba(148, 163, 184, 0.45);
+  /* 原来是 4px 8px 16px rgba(0,0,0,.4) + 8px 16px 32px rgba(0,0,0,.5)——
+     比浅色（.12 / .06）重约 8 倍，在深色页面上会在卡片右下糊出一大片黑，
+     看着"像背后还有一层背景"。现改成和浅色同一套几何，只把 alpha 调到合适的量。 */
+  --card-shadow: 0 10px 26px -12px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.26);
+  --hover-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
   --shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
-  --shadow-hover: 0 3px 8px rgba(0, 0, 0, 0.5);
+  --shadow-hover: 0 3px 8px rgba(0, 0, 0, 0.3);
   --surface: #1e293b;
   --glass-bg: rgba(30, 41, 59, 0.5);
   --glass-bg-strong: rgba(30, 41, 59, 0.75);
   --glass-border: rgba(255, 255, 255, 0.08);
   background:
-    radial-gradient(1100px 560px at 6% -8%, rgba(99, 102, 241, 0.22), transparent 60%),
-    radial-gradient(900px 620px at 100% -4%, rgba(99, 102, 241, 0.15), transparent 60%),
-    linear-gradient(165deg, #0f172a 0%, #151b2c 46%, #101623 100%);
+    radial-gradient(1100px 560px at 6% -8%, rgba(63, 124, 174, 0.18), transparent 60%),
+    radial-gradient(900px 620px at 100% -4%, rgba(63, 124, 174, 0.12), transparent 60%),
+    linear-gradient(165deg, #0e1626 0%, #161c26 46%, #0d131c 100%);
 }
 
 /* 深色下需要单独覆盖的组件 */
@@ -146,8 +207,8 @@ body[data-theme="dark"] .search-input {
   box-shadow: none;
 }
 body[data-theme="dark"] .search-input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18);
+  border-color: var(--focus-ring);
+  box-shadow: 0 0 0 4px var(--hover-bg-strong);
 }
 body[data-theme="dark"] .search-box .search-clear {
   background: rgba(148, 163, 184, 0.16);
@@ -158,17 +219,14 @@ body[data-theme="dark"] .search-box .search-clear:hover {
 
 /* 深色选中：蓝底 + 亮蓝边框界定 */
 body[data-theme="dark"] .bookmark-item.selected {
-  border-color: rgba(129, 140, 248, 0.55);
-  box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.2);
+  border-color: rgba(226, 232, 240, 0.5);
+  box-shadow: 0 0 0 1px rgba(226, 232, 240, 0.16);
 }
 body[data-theme="dark"] .cascade-card.selected {
-  border-color: rgba(129, 140, 248, 0.45);
-}
-body[data-theme="dark"] .sf-row.selected {
-  box-shadow: inset 0 0 0 1px rgba(129, 140, 248, 0.4);
+  border-color: rgba(226, 232, 240, 0.42);
 }
 body[data-theme="dark"] .root-card.selected {
-  border-color: rgba(129, 140, 248, 0.35);
+  border-color: rgba(226, 232, 240, 0.32);
 }
 
 /* 背景彩色光斑（叠加层，强化边缘色彩） */
@@ -225,7 +283,7 @@ body[data-theme="dark"] .root-card.selected {
   border-radius: 50%;
   pointer-events: none;
   z-index: 0;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.10), transparent 60%);
+  background: radial-gradient(circle, rgba(148, 163, 184, 0.12), transparent 60%);
   will-change: transform;
 }
 
@@ -237,7 +295,7 @@ body[data-theme="dark"] .root-card.selected {
   border-radius: 50%;
   pointer-events: none;
   z-index: 9999;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.28), transparent 70%);
+  background: radial-gradient(circle, rgba(148, 163, 184, 0.26), transparent 70%);
   transform: translate(-50%, -50%);
   animation: click-ripple 0.65s ease-out forwards;
 }
@@ -271,19 +329,39 @@ body[data-theme="dark"] .root-card.selected {
   position: relative;
   z-index: 5;
 }
+/* 和上下分隔条同一套语言：平时隐形，鼠标移上去浮出一颗小把手，拖拽时点亮变长。
+   位置：手柄本身贴着侧栏右边缘，但**视觉把手放到"侧栏右边 ↔ 主卡片左边"这条缝的正中**
+   （缝宽 = .main 的 padding-left 26px + resizer 自身 3px ≈ 29px，所以偏移 14.5px），
+   上下方向就是侧栏的垂直中心（resizer 与侧栏卡等高居中）。 */
+.sidebar-resizer::before {
+  /* 命中区（完全不可见）：横向铺满整条缝，纵向再各溢出 10px ——
+     把手依旧是"悬停才浮出"的观感，但实际不用瞄准那 6px */
+  content: "";
+  position: absolute;
+  top: -10px;
+  bottom: -10px;
+  left: -8px;
+  right: -26px;
+}
 .sidebar-resizer::after {
   content: "";
   position: absolute;
-  top: 26px;
-  bottom: 26px;
-  left: 50%;
-  width: 1px;
+  left: calc(50% + 14.5px);
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 4px;
+  height: 34px;
+  border-radius: var(--r-pill);
   background: transparent;
-  transition: background 0.15s;
+  transition: background 0.2s ease, height 0.2s ease;
 }
-.sidebar-resizer:hover::after,
+.sidebar-resizer:hover::after {
+  background: var(--btn-border);
+  height: 48px;
+}
 body.is-resizing-sidebar .sidebar-resizer::after {
-  background: var(--accent);
+  background: var(--focus-ring);
+  height: 72px;
 }
 body.is-resizing-sidebar {
   user-select: none;
@@ -321,7 +399,7 @@ body.is-resizing-sidebar .sidebar { transition: none; }
 .brand-logo {
   width: var(--logo-h);
   height: var(--logo-h);
-  border-radius: 8px;
+  border-radius: var(--r-md);
   display: grid;
   place-items: center;
   background: linear-gradient(180deg, #334155, #1e293b);
@@ -331,10 +409,10 @@ body.is-resizing-sidebar .sidebar { transition: none; }
 .brand-ver {
   font-size: 10px;
   font-weight: 700;
-  color: var(--accent-strong);
-  background: var(--accent-soft);
+  color: var(--text-2);
+  background: var(--btn-bg);
   padding: 2px 6px;
-  border-radius: 6px;
+  border-radius: var(--r-sm);
   letter-spacing: 0.3px;
 }
 
@@ -358,7 +436,7 @@ body.is-resizing-sidebar .sidebar { transition: none; }
   width: 100%;
   height: var(--search-h);
   padding: 0 46px 0 44px;
-  border-radius: 8px;
+  border-radius: var(--r-md);
   border: 1px solid var(--glass-border);
   background: var(--glass-bg-strong);
   backdrop-filter: blur(10px);
@@ -366,12 +444,12 @@ body.is-resizing-sidebar .sidebar { transition: none; }
   font-size: 14.5px;
   color: var(--text);
   outline: none;
-  transition: border-color 0.18s, box-shadow 0.18s;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 .search-input::placeholder { color: var(--text-3); }
 .search-input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 4px var(--accent-soft), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  border-color: var(--focus-ring);
+  box-shadow: 0 0 0 4px var(--hover-bg-strong), inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 .search-box .search-clear {
   position: absolute;
@@ -380,13 +458,13 @@ body.is-resizing-sidebar .sidebar { transition: none; }
   transform: translateY(-50%);
   width: 28px;
   height: 28px;
-  border-radius: 8px;
+  border-radius: var(--r-md);
   border: none;
   background: rgba(148, 163, 184, 0.12);
   color: var(--text-2);
   font-size: 13px;
 }
-.search-box .search-clear:hover { background: rgba(148, 163, 184, 0.22); color: var(--text); }
+.search-box .search-clear:hover { background: var(--btn-bg); color: var(--text); }
 
 .header-actions { flex: 0 0 auto; display: flex; align-items: center; gap: 10px; }
 
@@ -397,23 +475,24 @@ body.is-resizing-sidebar .sidebar { transition: none; }
   gap: 6px;
   height: var(--btn-h);
   padding: 0 12px;
-  border-radius: 8px;
+  border-radius: var(--r-md);
   border: 1px solid var(--btn-border);
   background: var(--btn-bg);
   color: var(--text);
   font-size: var(--font-md);
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.16s;
+  transition: all 0.2s;
   white-space: nowrap;
 }
 .btn:hover {
-  background: rgba(148, 163, 184, 0.34);
-  border-color: rgba(148, 163, 184, 0.6);
-  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.14);
+  background: var(--btn-hover-bg);
+  border-color: var(--btn-hover-border);
+  box-shadow: var(--hover-shadow);
   transform: translateY(-1px);
 }
-.btn:active { transform: translateY(0) scale(0.98); }
+/* 按下：底色更深一层，不再用缩放（缩放会让人觉得"按钮被捏了一下"） */
+.btn:active { background: var(--active-bg); transform: translateY(0); }
 .btn-primary {
   background: var(--btn-primary-bg);
   border-color: transparent;
@@ -426,9 +505,9 @@ body.is-resizing-sidebar .sidebar { transition: none; }
   min-width: 18px;
   height: 18px;
   padding: 0 5px;
-  border-radius: 9px;
-  background: var(--accent);
-  color: #fff;
+  border-radius: var(--r-md);
+  background: var(--accent-strong);
+  color: var(--btn-primary-fg);
   font-size: 11px;
   line-height: 18px;
   text-align: center;
@@ -443,20 +522,20 @@ body.is-resizing-sidebar .sidebar { transition: none; }
   justify-content: center;
   width: var(--icon-h);
   height: var(--icon-h);
-  border-radius: 8px;
+  border-radius: var(--r-md);
   border: 1px solid var(--btn-border);
   background: var(--btn-bg);
   color: var(--text-2);
   cursor: pointer;
-  transition: all 0.16s;
+  transition: all 0.2s;
 }
 .icon-btn:hover {
-  color: var(--accent);
-  background: rgba(148, 163, 184, 0.34);
-  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.14);
+  color: var(--hover-fg);
+  background: var(--btn-hover-bg);
+  box-shadow: var(--hover-shadow);
   transform: translateY(-1px);
 }
-.icon-btn:active { transform: translateY(0) scale(0.96); }
+.icon-btn:active { background: var(--active-bg); transform: translateY(0); }
 .icon-btn.badge::after {
   content: attr(data-badge);
   position: absolute;
@@ -465,7 +544,7 @@ body.is-resizing-sidebar .sidebar { transition: none; }
   min-width: 16px;
   height: 16px;
   padding: 0 4px;
-  border-radius: 8px;
+  border-radius: var(--r-md);
   background: var(--danger);
   color: #fff;
   font-size: 10px;
@@ -474,52 +553,224 @@ body.is-resizing-sidebar .sidebar { transition: none; }
   font-weight: 700;
 }
 
-/* ============================== 侧边栏 ============================== */
+/* ============================== 侧边栏 ==============================
+   .sidebar 只是**列容器**，本身不再是卡片：
+   工作区与文件夹是两张并列的玻璃卡片，上下叠放（不是一张大卡里套两张小卡）。 */
 .sidebar {
+  position: relative;
   flex: 0 0 auto;
   width: 230px;
   margin: 26px 0 26px 26px;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 14px 12px;
-  border-radius: var(--radius);
-  background: var(--card-bg);
-  border: 1px solid transparent;
-  backdrop-filter: blur(28px) saturate(1.9);
-  -webkit-backdrop-filter: blur(28px) saturate(1.9);
-  box-shadow: var(--card-shadow);
-  transition: width 0.22s cubic-bezier(0.4, 0, 0.2, 1), margin 0.22s, padding 0.22s;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.22s cubic-bezier(0.4, 0, 0.2, 1), margin 0.22s;
 }
 .sidebar.hidden {
   width: 0;
   margin-left: 0;
-  padding-left: 0;
-  padding-right: 0;
-  border: none;
-  box-shadow: none;
 }
-.sidebar-head {
-  padding: 2px 8px 10px;
-  font-size: 11px;
+/* 卡片之间的分隔条：既是 14px 间距，也是拖动调高度的命中区。
+   缝里**什么都不铺**（试过填一层同样的玻璃，反而把两张卡焊成一根柱子，已回退）：
+   露出的就是页面背景，靠"卡片有自己的玻璃边 + 投影收紧"来让它读起来干净。 */
+.sidebar-splitter {
+  position: relative;
+  flex: 0 0 auto;
+  height: 14px;
+  cursor: default;
+}
+/* 命中区（完全不可见）：把 14px 的缝往上下各撑 6px，观感不变、好抓很多 */
+.sidebar-splitter.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -6px;
+  bottom: -6px;
+}
+.sidebar-splitter.active { cursor: row-resize; }
+.sidebar-splitter.active::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 34px;
+  height: 3px;
+  border-radius: var(--r-pill);
+  background: transparent;
+  transition: background 0.2s ease, width 0.2s ease;
+}
+.sidebar-splitter.active:hover::after {
+  background: var(--btn-border);
+  width: 48px;
+}
+body.is-resizing-panel .sidebar-splitter.active::after {
+  background: var(--focus-ring);
+  width: 72px;
+}
+body.is-resizing-panel { cursor: row-resize; }
+body.is-resizing-panel .sidebar { transition: none; }
+
+/* ============================== 侧栏卡片（工作区 / 文件夹） ============================== */
+.panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  padding: 5px 10px 10px;
+  border-radius: var(--r-lg);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  backdrop-filter: blur(28px) saturate(1.9);
+  -webkit-backdrop-filter: blur(28px) saturate(1.9);
+  box-shadow: var(--card-shadow);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+/* 高度分配：上面那张卡就是分隔条决定的高度（**固定**，不是上限），下面那张吃掉剩余。
+   —— 用上限的话，内容比上限短时拖分隔条像素上毫无变化，用户只会觉得"拖不动"。
+      （我试过把这里改成 `max-height` 让卡片贴内容，结果就是手柄拖了不动 —— 已回退。） */
+.panel--fit {
+  flex: 0 0 calc(var(--panel-split, 0.35) * 100%);
+}
+.panel--fill {
+  flex: 1 1 auto;
+  min-height: 104px;
+}
+/* 卡片表头：标题 + 计数 + 该卡片自己的动作（例如工作区的「＋ 新建」）
+   注：这一段曾在删拖拽样式时被误删，导致「＋ 新建」退回浏览器默认按钮（深色下是块浅灰实心） */
+.panel-head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  /* 左内边距 = 行的 padding-left，标题与行首对齐 */
+  padding: 1px 4px 3px 8px;
+  user-select: none;
+}
+.panel-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 11.5px;
   font-weight: 700;
-  color: var(--text-3);
-  letter-spacing: 0.6px;
+  color: var(--text-2);
+  letter-spacing: 0.3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+.panel-count {
+  flex: 0 0 auto;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1.6;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-3);
+  padding: 0 6px;
+  border-radius: var(--r-pill);
+  background: rgba(148, 163, 184, 0.16);
+}
+.panel-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+/* 「文件夹」小标题：它不再是"分组"（下面没有自己的条目），而是给它下面那块内容（网址网格 + 文件夹卡片）
+   当标题 —— 所以底部间距收得比「最近浏览 / 常用」紧，视觉上和下面那块粘在一起。
+   （曾经这里有一排"点一下跳过去"的文件夹胶囊，已按要求删除；跳转能力还在主区顶部的看板索引条里。） */
+.folder-section { margin-bottom: 0; }
+.folder-section .section-head { margin-bottom: 10px; }
+
+/* 卡片表头按钮（「＋ 新建」）：以前是 22px 高 / 11px 字，指针够得着但看着小 —— 提到 26px 高 / 12px 字 */
+.panel-act {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 26px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-2);
+  font-family: inherit;   /* 按钮默认不继承字体，不写这条在深色下会露馅 */
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.panel-act:hover { background: var(--hover-bg); color: var(--hover-fg); }
+.panel-act:active { background: var(--active-bg); }
+/* 带文字的卡片动作（目前只有工作区的「＋ 新建」）：这是那张卡里的**主动作**，
+   给它实心底 + 投影，和顶栏主按钮同一套色，不再是"几乎看不见的透明文字按钮"。
+   深色下自动翻转成亮底深字（--btn-primary-* 两套主题各一份值）。 */
+.panel-act--text {
+  padding: 4px 10px;
+  background: var(--btn-ghost-white);
+  border: none;                                    /* 用户要求：白按钮不要边框线 */
+  color: var(--text);
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.12);    /* 去边框后靠投影把它"托"起来 */
+}
+.panel-act--text:hover {
+  background: var(--btn-ghost-white-hover);
+  color: var(--text);
+}
+.panel-act--text:active { background: var(--btn-ghost-white-hover); }
+/* 拖拽书签时「文件夹」表头右侧的提示 */
+.panel-hint {
+  padding: 2px 7px;
+  border-radius: var(--r-pill);
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-fg);
+  font-size: 10.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  animation: sdh-in 0.16s ease-out;
+}
+/* 文件夹树容器：纵向排列（面板内容区已经是 flex 列，这里显式声明一次，别依赖块级默认行为） */
 .sidebar-list { display: flex; flex-direction: column; }
-.sf { min-width: 0; }
+
+.panel-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 2px 0 0;
+  display: flex;
+  flex-direction: column;
+  /* 全局把滚动条藏起来了（::-webkit-scrollbar{display:none}），面板内溢出了就完全没提示；
+     这里单独给面板恢复一条很细的滚动条 */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.45) transparent;
+}
+.panel-body::-webkit-scrollbar { width: 7px; height: 0; display: block; }
+.panel-body::-webkit-scrollbar-track { background: transparent; }
+.panel-body::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.42);
+  border-radius: var(--r-pill);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.panel-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.7);
+  background-clip: content-box;
+}
+.sf { min-width: 0; flex: 0 0 auto; }
 .sf-row {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 8px;
-  border-radius: 8px;
+  gap: 4px;
+  min-height: 34px;
+  padding: 6px 4px 6px 8px;
+  border-radius: var(--r-md);
   cursor: pointer;
   color: var(--text);
   font-size: 13px;
   font-weight: 500;
-  transition: background 0.16s ease, color 0.16s ease;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
   min-width: 0;
   white-space: nowrap;
+  position: relative;
 }
 /* 层级：子文件夹逐级弱化，顶层更醒目 */
 .sf-row[data-depth="1"],
@@ -530,17 +781,27 @@ body.is-resizing-sidebar .sidebar { transition: none; }
   font-size: 12.5px;
   font-weight: 400;
 }
-.sf-row:hover { background: var(--row-hover); color: var(--accent-strong); }
+.sf-row:hover { background: var(--hover-bg); color: var(--hover-fg); }
+/* 滚动联动：主区正在看的文件夹。用左侧强调条表示"你在这里"，
+   和选中态（淡色描边框）是两种不同指示，可以同时出现 */
+.sf-row.spy { box-shadow: inset 2px 0 0 var(--text-2); }
+.sf-row.spy .sf-name { font-weight: 600; }
+.sf-row.spy.selected { box-shadow: inset 0 0 0 1px var(--sel-frame), inset 2px 0 0 var(--text-2); }
+.sf-row:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+/* 选中态：单纯一个淡色描边框，不要底色、也不要左边的色条 */
 .sf-row.selected {
-  background: var(--row-selected);
-  color: var(--accent-strong);
+  background: transparent;
+  color: var(--text);
   font-weight: 600;
-  box-shadow: inset 2px 0 0 var(--accent);
+  box-shadow: inset 0 0 0 1px var(--sel-frame);
 }
 .sf-chev {
   flex: 0 0 auto;
-  width: 22px;
-  height: 22px;
+  width: 17px;
+  height: 17px;
   display: grid;
   place-items: center;
   text-align: center;
@@ -552,10 +813,10 @@ button.sf-chev {
   color: var(--text-3);
   cursor: pointer;
   padding: 0;
-  border-radius: 5px;
-  transition: color 0.16s, background 0.16s;
+  border-radius: var(--r-xs);
+  transition: color 0.2s, background 0.2s;
 }
-button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent); }
+button.sf-chev:hover { background: var(--hover-bg); color: var(--hover-fg); }
 .sf-icon {
   flex: 0 0 auto;
   width: 16px;
@@ -563,15 +824,32 @@ button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent)
   place-items: center;
   color: var(--text-2);
 }
-.sf-row.selected .sf-icon { color: var(--accent-strong); }
+.sf-row.selected .sf-icon { color: var(--text); }
 .sf-body {
   display: grid;
   grid-template-rows: 0fr;
   opacity: 0;
-  transition: grid-template-rows 0.24s ease-out, opacity 0.16s ease;
+  transition: grid-template-rows 0.24s ease-out, opacity 0.2s ease;
 }
 .sf-body.open { grid-template-rows: 1fr; opacity: 1; }
+/* 收起时不可点：0fr + overflow:hidden 已经把它裁掉了，但补一条声明让语义明确 */
+.sf-body:not(.open) { pointer-events: none; }
 .sf-body-inner { overflow: hidden; min-height: 0; }
+/* 嵌套层级加一条淡淡的树线：光靠缩进很难一眼看出层级 */
+.sf-row[data-depth="1"]::before,
+.sf-row[data-depth="2"]::before,
+.sf-row[data-depth="3"]::before,
+.sf-row[data-depth="4"]::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--btn-border);
+}
+.sf-row[data-depth="1"]:last-child::before,
+.sf-row[data-depth="2"]:last-child::before { bottom: 50%; }
 .sf-name {
   flex: 1 1 auto;
   min-width: 0;
@@ -586,12 +864,403 @@ button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent)
   font-variant-numeric: tabular-nums;
   color: var(--text-3);
   padding: 0 6px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: rgba(148, 163, 184, 0.15);
 }
 .sf-row.selected .sf-count {
+  color: var(--text-2);
+  background: rgba(148, 163, 184, 0.2);
+}
+
+/* —— 拖拽中：整栏变成投放区（原先只有主区卡片有 drop-inside，侧栏毫无反馈） —— */
+/* 两张卡现在都是投放目标：文件夹卡 = 移动进去，工作区卡 = 登记进某一组，所以都亮起来 */
+.sidebar.dragging .panel--folders,
+.sidebar.dragging .panel--workspaces {
+  border-color: var(--focus-ring);
+  box-shadow: var(--card-shadow), 0 0 0 3px var(--sel-bg);
+}
+@keyframes sdh-in {
+  from { opacity: 0; transform: translateY(-3px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes sdh-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
+}
+/* 落点：命中 */
+.sf-row.drop-inside {
+  background: var(--sel-bg);
+  color: var(--hover-fg);
+  font-weight: 600;
+  box-shadow: inset 0 0 0 2px var(--focus-ring);
+}
+.sf-row.drop-inside .sf-icon { color: var(--hover-fg); }
+/* 落点：非法（拖文件夹进自己或后代） */
+.sf-row.drop-invalid {
+  opacity: 0.34;
+  box-shadow: none;
+}
+.sf-row.drop-invalid:hover {
+  background: transparent;
+  color: inherit;
+}
+/* 拖拽中每一行都轻微外扩，暗示"这里可以放" */
+.sidebar.dragging .sf-row:not(.drop-invalid):not(.drop-inside):hover {
+  background: var(--hover-bg);
+  box-shadow: inset 0 0 0 1px var(--hover-border);
+}
+
+/* —— hover 细节：快捷动作浮出、计数淡出、图标微动 ——
+   计数与动作共用一个「固定宽度的槽」：槽宽不变 → 悬停切换时名字不抖，
+   也不需要做遮罩（否则长名字会从透明按钮底下透出来） —— */
+.sf-icon { transition: transform 0.2s ease; }
+.sf-row:hover .sf-icon { transform: scale(1.09); }
+.sf-slot {
+  position: relative;
+  flex: 0 0 auto;
+  width: 46px;
+  height: 22px;
+}
+.sf-count {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px;
+  font-weight: 700;
+  transition: opacity 0.2s ease;
+}
+.sf-row:hover .sf-count,
+.sf-row:focus-within .sf-count { opacity: 0; }
+.sf-actions {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.sf-row:hover .sf-actions,
+.sf-row:focus-within .sf-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+.sf-act {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, transform 0.2s;
+}
+.sf-act:hover {
+  background: var(--hover-bg-strong);
+  color: var(--hover-fg);
+}
+
+/* 拖拽中隐藏 hover 快捷动作，改回显示数量 —— 投放时"这个文件夹有几项"比按钮更有用 */
+.sidebar.dragging .sf-row:hover .sf-actions,
+.sidebar.dragging .sf-row:focus-within .sf-actions {
+  opacity: 0;
+  pointer-events: none;
+}
+.sidebar.dragging .sf-row:hover .sf-count,
+.sidebar.dragging .sf-row:focus-within .sf-count { opacity: 1; }
+.sidebar.dragging .sf-row:hover .sf-icon { transform: none; }
+
+/* ============================== 常用（书签栏卡片内，紧挨「最近浏览」） ============================== */
+.freq-section { margin-bottom: 14px; }
+.freq-sub {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-3);
+}
+/* 条目复用 .recent-item（同一套观感），只多一个次数徽标 */
+.freq-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+.freq-count {
+  flex: 0 0 auto;
+  min-width: 19px;
+  padding: 0 5px;
+  border-radius: var(--r-pill);
+  background: rgba(148, 163, 184, 0.16);
+  color: var(--text-3);
+  font-size: 10.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.55;
+  text-align: center;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.recent-item:hover .freq-count {
+  background: var(--sel-bg);
+  color: var(--hover-fg);
+}
+
+/* ============================== 侧栏 · 工作区 ============================== */
+.ws-item { min-width: 0; flex: 0 0 auto; }
+.ws-empty {
+  margin: 4px 2px 2px;
+  padding: 12px 12px 13px;
+  border: 1px dashed var(--btn-border);
+  border-radius: var(--r-md);
+  color: var(--text-2);
+  font-size: 12px;
+  line-height: 1.65;
+}
+.ws-empty-icon {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-bottom: 8px;
+  border-radius: var(--r-md);
+  background: var(--sel-bg);
+  color: var(--text-2);
+}
+.ws-empty .link-btn {
+  display: block;
+  margin-top: 8px;
+  padding: 3px 0;
+  border: none;
+  background: none;
   color: var(--accent-strong);
-  background: var(--accent-soft);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ws-empty .link-btn:hover { text-decoration: underline; }
+.ws-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 34px;
+  padding: 6px 4px 6px 8px;
+  border-radius: var(--r-md);
+  cursor: pointer;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  min-width: 0;
+  white-space: nowrap;
+}
+.ws-row:hover {
+  background: var(--hover-bg);
+  color: var(--hover-fg);
+  box-shadow: var(--hover-shadow);
+}
+.ws-row.empty .ws-icon { color: var(--text-3); }
+/* —— 拖拽落点：工作区行 = "松手把这些书签加进这一组"（不移动书签本体，所以用"加进"这套视觉） —— */
+.ws-row.drop-inside {
+  background: var(--sel-bg);
+  color: var(--hover-fg);
+  font-weight: 600;
+  box-shadow: inset 0 0 0 2px var(--focus-ring);
+}
+.ws-row.drop-inside .ws-icon,
+.ws-row.drop-inside .ws-chev { color: var(--hover-fg); }
+/* 落点高亮期间把计数/动作让出来（.ws-row.empty .ws-count 等规则在后面，这里提高特异性压过它） */
+.sidebar.dragging .ws-row.drop-inside .ws-count { opacity: 0; }
+.sidebar.dragging .ws-row.drop-inside .ws-actions { opacity: 0; pointer-events: none; }
+/* 拖拽中每一行都轻微外扩，暗示"这里可以放"（和文件夹行同一套语言） */
+.sidebar.dragging .ws-row:not(.drop-inside):hover {
+  background: var(--hover-bg);
+  box-shadow: inset 0 0 0 1px var(--hover-border);
+}
+.ws-chev {
+  flex: 0 0 auto;
+  width: 17px;
+  display: grid;
+  place-items: center;
+  color: var(--text-3);
+}
+.ws-row:hover .ws-chev { color: var(--hover-fg); }
+.ws-icon {
+  flex: 0 0 auto;
+  width: 16px;
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+  transition: transform 0.2s ease;
+}
+.ws-row:hover .ws-icon { transform: scale(1.1); }
+.ws-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* 计数 / 动作共用一个固定宽度的槽（3 个按钮 × 22px + 2 个 2px 缝 = 70px） */
+.ws-slot {
+  position: relative;
+  flex: 0 0 auto;
+  width: 70px;
+  height: 22px;
+}
+.ws-count {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1.8;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-3);
+  padding: 0 6px;
+  border-radius: var(--r-pill);
+  background: rgba(148, 163, 184, 0.16);
+  transition: opacity 0.2s ease;
+}
+.ws-count.zero { opacity: 0.45; }
+.ws-row.empty .ws-count { opacity: 0.5; }
+.ws-row:hover .ws-count,
+.ws-row:focus-within .ws-count { opacity: 0; }
+.ws-actions {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.ws-row:hover .ws-actions,
+.ws-row:focus-within .ws-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+/* 行内动作按钮：18px → 22px（命中面积 ×1.5），图标 13 → 14，和文件夹行的 .sf-act 完全同一套 */
+.ws-act {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, transform 0.2s;
+}
+.ws-act:hover {
+  background: var(--hover-bg-strong);
+  color: var(--hover-fg);
+}
+
+/* —— 展开后逐个列出组内的标签页（单击某一个 = 只开这一个） —— */
+.ws-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 0.22s ease-out, opacity 0.2s ease;
+}
+.ws-body.open { grid-template-rows: 1fr; opacity: 1; }
+/* 收起时不可点：0fr + overflow:hidden 已经把它裁掉了，但补一条声明让语义明确 */
+.ws-body:not(.open) { pointer-events: none; }
+.ws-body-inner {
+  overflow: hidden;
+  min-height: 0;
+  padding-left: 18px;
+  border-left: 1px solid var(--btn-border);
+  margin: 1px 0 3px 16px;
+}
+.ws-tab {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 28px;
+  padding: 5px 6px;
+  margin-left: 2px;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  color: var(--text-2);
+  font-size: 12.5px;
+  min-width: 0;
+  white-space: nowrap;
+  transition: background 0.2s, color 0.2s;
+}
+.ws-tab:hover { background: var(--hover-bg); color: var(--hover-fg); }
+.ws-tab-fav {
+  position: relative;
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  display: grid;
+  place-items: center;
+  color: var(--text-3);
+}
+.ws-tab-fav img {
+  position: absolute;
+  inset: 0;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  display: block;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.ws-tab-fav img.ready { opacity: 1; }
+.ws-tab-globe { position: absolute; inset: 0; }
+.ws-tab-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ws-tab-x {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-3);
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s, background 0.2s, color 0.2s;
+}
+.ws-tab:hover .ws-tab-x,
+.ws-tab:focus-within .ws-tab-x { opacity: 1; }
+.ws-tab-x:hover { background: var(--danger-soft); color: var(--danger); }
+.ws-tab-empty {
+  margin: 2px 6px 4px;
+  color: var(--text-3);
+  font-size: 11px;
+}
+/* 原书签已被删除、退回保存时快照的条目 */
+.ws-tab.missing .ws-tab-name { color: var(--text-3); }
+.ws-tab-gone {
+  flex: 0 0 auto;
+  padding: 0 5px;
+  border-radius: var(--r-pill);
+  background: rgba(148, 163, 184, 0.2);
+  color: var(--text-3);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.6;
 }
 
 /* ============================== 主区域：横向多列瀑布流 ============================== */
@@ -618,7 +1287,7 @@ button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent)
   grid-column: 1 / -1;
 }
 
-/* ============================== 最近浏览（书签栏卡片内分组） ============================== */
+/* ============================== 最近浏览（「书签栏」卡片内的一个分组） ============================== */
 .recent-section { margin-bottom: 14px; }
 .section-head {
   display: flex;
@@ -642,7 +1311,8 @@ button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent)
   width: 3px;
   height: 14px;
   border-radius: 2px;
-  background: linear-gradient(180deg, #5a9bff, #2f6fe0);
+  /* 用 app 的强调色，别再引入一条蓝色（全局只留一个强调色） */
+  background: linear-gradient(180deg, var(--accent), var(--accent-strong));
 }
 .section-label .count { color: var(--text-3); font-weight: 500; }
 .section-head .spacer { flex: 1; }
@@ -653,8 +1323,9 @@ button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent)
   font-size: 12px;
   cursor: pointer;
 }
-.section-head .link-btn:hover { color: var(--accent); }
+.section-head .link-btn:hover {color: var(--hover-fg);}
 
+/* 按列自动排（列数随卡片宽度自动，原版就是这个） */
 .recent-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -665,14 +1336,19 @@ button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent)
   align-items: center;
   gap: 8px;
   padding: 6px 8px;
-  border-radius: 8px;
+  border-radius: var(--r-sm);
   background: transparent;
   border: 1px solid transparent;
   cursor: pointer;
-  transition: background 0.16s ease, border-color 0.16s ease;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
   min-width: 0;
 }
-.recent-item:hover { background: var(--chip-hover); border-color: rgba(99, 102, 241, 0.18); }
+/* hover 全站统一成这一套：--hover-bg（中性底）+ --hover-fg（文字变深/变亮），过渡 0.2s */
+.recent-item:hover {
+  background: var(--hover-bg);
+  border-color: transparent;
+  color: var(--hover-fg);
+}
 .recent-item .title {
   font-size: 12.5px;
   font-weight: 600;
@@ -687,24 +1363,24 @@ button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent)
   display: grid;
   grid-template-rows: 1fr;
   opacity: 1;
-  transition: grid-template-rows 0.26s ease-out, opacity 0.18s ease;
+  transition: grid-template-rows 0.26s ease-out, opacity 0.2s ease;
 }
 .root-body-inner { overflow: hidden; min-height: 0; }
 .root-body.is-collapsed { grid-template-rows: 0fr; opacity: 0; }
 .root-card {
-  border-radius: var(--radius);
+  border-radius: var(--r-lg);
   background: var(--card-bg);
-  border: 1px solid transparent;
+  border: 1px solid var(--card-border);
   backdrop-filter: blur(28px) saturate(1.9);
   -webkit-backdrop-filter: blur(28px) saturate(1.9);
   box-shadow: var(--card-shadow);
   padding: 14px;
-  transition: border-color 0.16s, box-shadow 0.16s, background 0.16s;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
 .root-card.drop-inside {
-  border-color: var(--accent);
-  background: rgba(235, 244, 255, 0.6);
-  box-shadow: 0 0 0 4px var(--accent-soft), var(--shadow);
+  border-color: var(--focus-ring);
+  background: var(--sel-bg);
+  box-shadow: 0 0 0 4px var(--hover-bg-strong), var(--shadow);
 }
 .root-card.selected {
   background: var(--sel-folder);
@@ -715,24 +1391,24 @@ button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent)
 
 .cascade-card {
   /* 仅作透明放置容器，不渲染“卡片” */
-  border-radius: 12px;
+  border-radius: var(--r-lg);
   padding: 2px 6px 6px;
   margin-bottom: 2px;
   background: transparent;
   border: 1px solid transparent;
-  transition: background 0.16s, border-color 0.16s;
+  transition: background 0.2s, border-color 0.2s;
 }
 .cascade-card.drop-inside {
-  background: var(--row-hover);
-  border-color: rgba(99, 102, 241, 0.32);
+  background: var(--sel-bg);
+  border-color: var(--focus-ring);
 }
 .cascade-card.focused {
-  background: rgba(99, 102, 241, 0.07);
-  border-color: rgba(99, 102, 241, 0.28);
+  background: var(--hover-bg);
+  border-color: var(--hover-border);
 }
 .cascade-card.selected {
   background: var(--sel-folder);
-  border-color: rgba(99, 102, 241, 0.3);
+  border-color: var(--focus-ring);
 }
 
 .cascade-heading {
@@ -741,11 +1417,11 @@ button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent)
   gap: 8px;
   padding: 4px 2px;
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: var(--r-md);
   user-select: none;
-  transition: background 0.15s;
+  transition: background 0.2s;
 }
-.cascade-heading:hover { background: rgba(99, 102, 241, 0.07); }
+.cascade-heading:hover { background: var(--row-hover); }
 .cascade-heading:active { cursor: grabbing; }
 
 .cascade-toggle {
@@ -758,11 +1434,14 @@ button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent)
   background: none;
   color: var(--text-2);
   cursor: pointer;
-  border-radius: 7px;
-  transition: all 0.16s;
+  border-radius: var(--r-sm);
+  transition: all 0.2s;
   padding: 0;
 }
-.cascade-toggle:hover { color: var(--accent); background: rgba(99, 102, 241, 0.1); }
+.cascade-toggle:hover {
+  color: var(--hover-fg);
+  background: var(--hover-bg);
+}
 .cascade-toggle .chev { display: block; font-size: 11px; line-height: 1; }
 
 .cascade-title {
@@ -788,9 +1467,12 @@ button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent)
   height: 0;
   border-top: 1px dashed #dbe3ef;
   opacity: 0;
-  transition: opacity 0.16s;
+  transition: opacity 0.2s;
 }
-.cascade-heading:hover .cascade-dash { opacity: 1; border-color: var(--accent); }
+.cascade-heading:hover .cascade-dash {
+  opacity: 1;
+  border-color: var(--hover-border);
+}
 
 .cascade-badge {
   flex: 0 0 auto;
@@ -798,7 +1480,7 @@ button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent)
   color: var(--text-3);
   padding: 2px 8px;
   background: rgba(148, 163, 184, 0.15);
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   font-weight: 600;
 }
 .cascade-handle {
@@ -807,7 +1489,7 @@ button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent)
   display: none;
   cursor: grab;
   padding: 2px 4px;
-  border-radius: 6px;
+  border-radius: var(--r-sm);
 }
 .cascade-heading:hover .cascade-handle { display: block; }
 
@@ -815,7 +1497,7 @@ button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent)
   display: grid;
   grid-template-rows: 1fr;
   opacity: 1;
-  transition: grid-template-rows 0.24s ease-out, opacity 0.16s ease;
+  transition: grid-template-rows 0.24s ease-out, opacity 0.2s ease;
   margin-left: 10px;
   padding-left: 12px;
   border-left: 2px solid rgba(148, 163, 184, 0.25);
@@ -852,30 +1534,45 @@ button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent)
   top: -1px;
   z-index: 12;
   margin: 0 0 16px;
+  /* 「文件夹 / 标签 / 最近」都在同一行，靠竖分隔线分组；不够宽就自动换行 */
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px 10px;
-  padding: 6px 10px;
-  border-radius: 12px;
-  background: var(--glass-bg-strong);
-  border: 1px solid var(--glass-border);
-  backdrop-filter: blur(16px) saturate(1.6);
-  -webkit-backdrop-filter: blur(16px) saturate(1.6);
-  box-shadow: 0 8px 22px -16px rgba(67, 74, 148, 0.5);
+  gap: 8px 12px;
+  padding: 10px 12px;
+  /* 和其他卡片（.root-card / 侧栏的 .panel）用**完全同一套配方**：
+     之前这里用的是 --glass-bg-strong（更白更实），所以看着跟别的卡片不是一家人。
+     圆角比卡片略小一点，作为"工具条"和"内容卡片"的区分 */
+  border-radius: var(--r-md);
+  background: var(--card-bg);
+  /* 这里也必须用同一条玻璃边：它就是"主卡片上方那条"，和另外三张卡片同一套配方，
+     以前漏了这条边，于是四张卡里只有它没有轮廓（用户一眼看出来了）。 */
+  border: 1px solid var(--card-border);
+  backdrop-filter: blur(28px) saturate(1.9);
+  -webkit-backdrop-filter: blur(28px) saturate(1.9);
+  box-shadow: var(--card-shadow);
 }
+/* label 与胶囊分成两列：胶囊自己换行，**每一行都从同一条左边界起**，
+   不会像以前那样"第二行缩到 label 底下" */
 .idx-group {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  gap: 8px;
+}
+.idx-chips {
+  display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
 }
 .idx-label {
-  font-size: 11px;
+  flex: 0 0 auto;
+  font-size: 11.5px;
   font-weight: 700;
-  letter-spacing: 0.4px;
-  color: var(--text-3);
-  margin-right: 2px;
+  letter-spacing: 0.3px;
+  color: var(--text-2);
+  line-height: 29px;   /* = 胶囊高度，让 label 与第一行对齐 */
 }
 .idx-sep {
   width: 1px;
@@ -886,50 +1583,86 @@ button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent)
 .idx-chip {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 3px 8px;
+  gap: 7px;
+  padding: 5px 11px 5px 12px;
   border: 1px solid transparent;
-  border-radius: 999px;
+  /* 内层比容器（9px）再小一档：全圆胶囊在这里显得太软太大 */
+  border-radius: var(--r-sm);
   background: transparent;
   color: var(--text-2);
   font-family: inherit;
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.14s, color 0.14s, border-color 0.14s;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
-.idx-chip:hover { background: var(--chip-hover); color: var(--accent-strong); }
+/* hover 和侧栏的文件夹行同一套（中性石板底 + --accent-strong 文字），不加描边和投影 */
+/* 注：原来的 --chip-hover 是 rgba(255,255,255,.85)（近乎实白），在玻璃卡片里会糊出一块死白，已删掉 */
+.idx-chip:hover {
+  background: var(--hover-bg);
+  border-color: transparent;
+  color: var(--hover-fg);
+  box-shadow: none;
+}
+.idx-chip:hover .idx-count {
+  background: var(--sel-bg);
+  color: var(--hover-fg);
+}
+/* 按下只用底色反馈，不做位移（和侧栏一致） */
+.idx-chip:active {background: var(--active-bg);}
+.idx-chip:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
 .idx-chip.active {
-  background: var(--accent-soft);
-  border-color: rgba(99, 102, 241, 0.35);
-  color: var(--accent-strong);
+  background: var(--sel-bg);
+  border-color: var(--focus-ring);
+  color: var(--hover-fg);
   font-weight: 600;
 }
+.idx-chip.active:hover {
+  background: var(--sel-bg-strong);
+  border-color: var(--focus-ring);
+}
 .idx-count {
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: var(--text-3);
   background: rgba(148, 163, 184, 0.16);
-  border-radius: 999px;
-  padding: 0 5px;
-  line-height: 1.5;
+  border-radius: var(--r-pill);
+  /* 定宽 + 居中：一位数和两位数一样宽，同长度的标签胶囊宽度就一致了 */
+  min-width: 19px;
+  padding: 0 4px;
+  text-align: center;
+  box-sizing: border-box;
+  line-height: 1.55;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 .idx-chip.active .idx-count {
-  color: var(--accent-strong);
-  background: rgba(99, 102, 241, 0.16);
+  color: var(--hover-fg);
+  background: var(--sel-bg-strong);
 }
 .idx-clear {
-  border: none;
+  border: 1px solid transparent;
   background: none;
   color: var(--text-3);
   font-family: inherit;
-  font-size: 12px;
+  font-size: 12.5px;
   cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 6px;
+  padding: 5px 10px;
+  border-radius: var(--r-sm);
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
-.idx-clear:hover { color: var(--accent); background: var(--accent-soft); }
+.idx-clear:hover {
+  color: var(--hover-fg);
+  background: var(--hover-bg-strong);
+  border-color: var(--hover-border);
+}
+.idx-clear:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
 .board-filter-empty { grid-column: 1 / -1; }
 .board-filter-empty .link-btn {
   border: none;
@@ -944,7 +1677,7 @@ button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent)
 .bookmark-grid.drag-over-empty {
   outline: 2px dashed var(--accent);
   outline-offset: 4px;
-  border-radius: 12px;
+  border-radius: var(--r-lg);
 }
 
 /* 「展开全部 N 个」：横跨整行的一条，接在可见书签之后 */
@@ -957,19 +1690,19 @@ button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent)
   margin: 2px 0;
   padding: 3px 9px 3px 7px;
   border: 1px dashed rgba(148, 163, 184, 0.5);
-  border-radius: 7px;
+  border-radius: var(--r-sm);
   background: transparent;
   color: var(--text-2);
   font-family: inherit;
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: color 0.16s, border-color 0.16s, background 0.16s;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
 }
 .grid-more:hover {
-  color: var(--accent);
-  border-color: var(--accent);
-  background: var(--accent-soft);
+  color: var(--hover-fg);
+  border-color: var(--hover-border);
+  background: var(--hover-bg);
 }
 
 /* ============================== 文件夹排列模式（顶栏按钮切换） ==============================
@@ -1009,7 +1742,7 @@ button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent)
   align-items: center;
   gap: 8px;
   padding: 6px 8px;
-  border-radius: 8px;
+  border-radius: var(--r-md);
   background: transparent;
   border: 1px solid transparent;
   cursor: pointer;
@@ -1019,28 +1752,28 @@ button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent)
   min-width: 0;
 }
 .bookmark-item:hover {
-  background: var(--chip-hover);
+  background: var(--row-hover);
   box-shadow: var(--hover-shadow);
 }
 .bookmark-item.selected {
   background: var(--sel-chip);
-  border-color: rgba(99, 102, 241, 0.4);
+  border-color: var(--focus-ring);
 }
 .bookmark-item.focused {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
   animation: pulse 1.1s ease-out 2;
 }
 @keyframes pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
-  50% { box-shadow: 0 0 0 6px rgba(99, 102, 241, 0.18); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(148, 163, 184, 0); }
+  50% { box-shadow: 0 0 0 6px rgba(148, 163, 184, 0.3); }
 }
 
 .bookmark-favicon {
   flex: 0 0 auto;
   width: 20px;
   height: 20px;
-  border-radius: 5px;
+  border-radius: var(--r-xs);
   display: grid;
   place-items: center;
   overflow: hidden;
@@ -1051,7 +1784,7 @@ button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent)
 .bookmark-favicon .favicon-skeleton {
   width: 100%;
   height: 100%;
-  border-radius: 5px;
+  border-radius: var(--r-xs);
   background: var(--btn-bg);
   opacity: 0.6;
 }
@@ -1059,7 +1792,7 @@ button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent)
   position: relative;
   width: 100%;
   height: 100%;
-  border-radius: 5px;
+  border-radius: var(--r-xs);
   display: grid;
   place-items: center;
   color: #fff;
@@ -1111,9 +1844,9 @@ button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent)
   align-items: center;
   gap: 8px;
   padding: 8px 14px;
-  border-radius: 12px;
+  border-radius: var(--r-lg);
   background: var(--panel-bg);
-  border: 1px solid rgba(99, 102, 241, 0.4);
+  border: 1px solid var(--focus-ring);
   box-shadow: 0 10px 30px rgba(30, 41, 59, 0.25);
   font-size: 13px;
   font-weight: 600;
@@ -1123,7 +1856,7 @@ button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent)
   min-width: 20px;
   height: 20px;
   padding: 0 6px;
-  border-radius: 8px;
+  border-radius: var(--r-md);
   background: var(--accent);
   color: #fff;
   font-size: 11px;
@@ -1138,14 +1871,14 @@ button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent)
   background: var(--accent);
   border-radius: 2px;
   pointer-events: none;
-  box-shadow: 0 0 6px rgba(99, 102, 241, 0.7);
+  box-shadow: 0 0 6px rgba(148, 163, 184, 0.7);
 }
 .drop-line::before {
   content: "";
   position: absolute;
   background: var(--accent);
   border-radius: 50%;
-  box-shadow: 0 0 6px rgba(99, 102, 241, 0.8);
+  box-shadow: 0 0 6px rgba(63, 124, 174, 0.7);
 }
 .drop-line.v::before {
   width: 7px;
@@ -1164,8 +1897,8 @@ button.sf-chev:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent)
 .marquee {
   position: fixed;
   z-index: 850;
-  border: 1px solid var(--accent);
-  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid var(--focus-ring);
+  background: var(--sel-bg);
   border-radius: 3px;
   pointer-events: none;
 }
@@ -1180,7 +1913,7 @@ body.is-dragging .cascade-heading { cursor: grabbing; }
   z-index: 1000;
   min-width: 200px;
   padding: 6px;
-  border-radius: 12px;
+  border-radius: var(--r-lg);
   background: var(--panel-bg);
   backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
@@ -1196,16 +1929,19 @@ body.is-dragging .cascade-heading { cursor: grabbing; }
   align-items: center;
   gap: 10px;
   padding: 8px 12px;
-  border-radius: 8px;
+  border-radius: var(--r-md);
   font-size: 13.5px;
   cursor: pointer;
   color: var(--text);
 }
-.context-menu-item:hover { background: rgba(99, 102, 241, 0.1); color: var(--accent); }
-.context-menu-item.danger:hover { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+.context-menu-item:hover {
+  background: var(--hover-bg-solid-strong);
+  color: var(--hover-fg);
+}
+.context-menu-item.danger:hover { background: var(--danger-soft); color: var(--danger); }
 .context-menu-item.disabled { opacity: 0.4; pointer-events: none; }
 .context-menu-item .mi-icon { width: 16px; display: inline-flex; align-items: center; justify-content: center; color: var(--text-2); }
-.context-menu-item:hover .mi-icon { color: var(--accent); }
+.context-menu-item:hover .mi-icon {color: var(--hover-fg);}
 .context-menu-item.danger:hover .mi-icon { color: var(--danger); }
 .context-menu-separator { height: 1px; margin: 5px 8px; background: rgba(148, 163, 184, 0.2); }
 
@@ -1227,7 +1963,7 @@ body.is-dragging .cascade-heading { cursor: grabbing; }
   max-height: 80vh;
   display: flex;
   flex-direction: column;
-  border-radius: 18px;
+  border-radius: var(--r-xl);
   background: var(--panel-bg);
   backdrop-filter: blur(24px);
   border: 1px solid var(--glass-border);
@@ -1249,26 +1985,38 @@ body.is-dragging .cascade-heading { cursor: grabbing; }
   border-top: 1px solid rgba(148, 163, 184, 0.18);
 }
 .field { margin-bottom: 14px; }
+.modal-note {
+  margin: 0 0 14px;
+  padding: 9px 11px;
+  border-radius: var(--r-md);
+  background: var(--accent-soft);
+  color: var(--text-2);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
 .field-label { display: block; font-size: 12.5px; font-weight: 600; color: var(--text-2); margin-bottom: 6px; }
 .field-input {
   width: 100%;
   height: 40px;
   padding: 0 12px;
-  border-radius: 8px;
+  border-radius: var(--r-md);
   border: 1px solid rgba(148, 163, 184, 0.4);
   background: var(--surface);
   font-size: 14px;
   color: var(--text);
   outline: none;
-  transition: border-color 0.16s, box-shadow 0.16s;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
-.field-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.field-input:focus {
+  border-color: var(--focus-ring);
+  box-shadow: 0 0 0 3px var(--sel-bg);
+}
 
 .folder-list {
   max-height: 240px;
   overflow-y: auto;
   border: 1px solid rgba(148, 163, 184, 0.3);
-  border-radius: 8px;
+  border-radius: var(--r-md);
   padding: 4px;
 }
 .folder-item {
@@ -1276,12 +2024,16 @@ body.is-dragging .cascade-heading { cursor: grabbing; }
   align-items: center;
   gap: 8px;
   padding: 7px 10px;
-  border-radius: 7px;
+  border-radius: var(--r-sm);
   font-size: 13px;
   cursor: pointer;
 }
-.folder-item:hover { background: var(--row-hover); }
-.folder-item.selected { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.folder-item:hover {background: var(--hover-bg-solid);}
+.folder-item.selected {
+  background: var(--sel-bg);
+  color: var(--text);
+  font-weight: 600;
+}
 .folder-item .fold-indent { color: var(--text-3); }
 
 /* ============================== 提示 ============================== */
@@ -1292,7 +2044,7 @@ body.is-dragging .cascade-heading { cursor: grabbing; }
   transform: translateX(-50%);
   z-index: 1100;
   padding: 10px 18px;
-  border-radius: 12px;
+  border-radius: var(--r-lg);
   background: rgba(30, 41, 59, 0.9);
   color: #fff;
   font-size: 13.5px;
@@ -1301,6 +2053,28 @@ body.is-dragging .cascade-heading { cursor: grabbing; }
   animation: pop-in 0.16s ease-out;
 }
 .toast.warning { background: rgba(217, 119, 6, 0.95); }
+/* 带动作的提示（如工作区「撤销」）：给一条后路，别让有副作用的操作无法反悔 */
+.toast.has-action {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-right: 10px;
+}
+.toast-msg { flex: 1 1 auto; }
+.toast-action {
+  flex: 0 0 auto;
+  padding: 5px 11px;
+  border: none;
+  border-radius: var(--r-md);
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+.toast-action:hover { background: rgba(255, 255, 255, 0.3); }
+.toast-action:active {background: rgba(255, 255, 255, 0.45);}
 
 /* ============================== 回收站 ============================== */
 .trash-overlay {
@@ -1345,7 +2119,7 @@ body.is-dragging .cascade-heading { cursor: grabbing; }
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: var(--r-md);
   background: var(--card-bg);
   border: 1px solid transparent;
   margin-bottom: 8px;
@@ -1363,14 +2137,14 @@ body.is-dragging .cascade-heading { cursor: grabbing; }
   align-items: center;
   gap: 10px;
   padding: 10px 14px;
-  border-radius: 8px;
+  border-radius: var(--r-md);
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   margin-bottom: 6px;
   cursor: pointer;
-  transition: all 0.14s;
+  transition: all 0.2s;
 }
-.search-result:hover { background: var(--surface); box-shadow: var(--shadow-hover); }
+.search-result:hover { background: var(--row-hover); box-shadow: var(--shadow-hover); }
 .search-result .sr-icon { flex: 0 0 auto; width: 20px; text-align: center; font-size: 15px; }
 .search-result .sr-title {
   flex: 0 1 auto;
@@ -1411,7 +2185,7 @@ body.is-dragging .cascade-heading { cursor: grabbing; }
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  border: 3px solid rgba(99, 102, 241, 0.18);
+  border: 3px solid rgba(148, 163, 184, 0.2);
   border-top-color: var(--accent);
   animation: spin 0.8s linear infinite;
 }
@@ -1431,7 +2205,7 @@ body.is-dragging .cascade-heading { cursor: grabbing; }
 .bg-panel {
   width: 460px;
   max-width: calc(100vw - 40px);
-  border-radius: 18px;
+  border-radius: var(--r-xl);
   background: var(--panel-bg);
   backdrop-filter: blur(24px);
   border: 1px solid var(--glass-border);
@@ -1463,14 +2237,17 @@ body.is-dragging .cascade-heading { cursor: grabbing; }
 .bg-image {
   position: relative;
   height: 64px;
-  border-radius: 12px;
+  border-radius: var(--r-lg);
   border: 2px solid transparent;
   cursor: pointer;
   overflow: hidden;
-  transition: transform 0.14s, border-color 0.14s, box-shadow 0.14s;
+  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
 }
 .bg-image:hover { transform: translateY(-2px); }
-.bg-image.active { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.bg-image.active {
+  border-color: var(--focus-ring);
+  box-shadow: 0 0 0 3px var(--sel-bg);
+}
 .bg-image img {
   width: 100%;
   height: 100%;
@@ -1511,7 +2288,7 @@ body.is-dragging .cascade-heading { cursor: grabbing; }
   right: 4px;
   width: 20px;
   height: 20px;
-  border-radius: 6px;
+  border-radius: var(--r-sm);
   border: none;
   background: rgba(0, 0, 0, 0.4);
   color: #fff;
@@ -1531,7 +2308,11 @@ body.is-dragging .cascade-heading { cursor: grabbing; }
   border: 2px dashed rgba(148, 163, 184, 0.4);
   background: transparent;
 }
-.bg-upload:hover { border-color: var(--accent); color: var(--accent); }
+.bg-upload:hover {
+  border-color: var(--hover-border);
+  color: var(--hover-fg);
+  background: var(--hover-bg-solid);
+}
 .bg-advanced {
   border-top: 1px solid rgba(148, 163, 184, 0.15);
   margin: 8px 18px 0;
@@ -1568,7 +2349,7 @@ body.is-dragging .cascade-heading { cursor: grabbing; }
   height: 30px;
   padding: 0;
   border: 1px solid var(--btn-border);
-  border-radius: 6px;
+  border-radius: var(--r-sm);
   background: transparent;
   cursor: pointer;
 }
@@ -1577,28 +2358,38 @@ body.is-dragging .cascade-heading { cursor: grabbing; }
 .bg-dir {
   width: 34px;
   height: 30px;
-  border-radius: 6px;
+  border-radius: var(--r-sm);
   border: 1px solid var(--btn-border);
   background: var(--btn-bg);
   color: var(--text-2);
   font-size: 14px;
   cursor: pointer;
-  transition: all 0.14s;
+  transition: all 0.2s;
   padding: 0;
 }
-.bg-dir:hover { border-color: var(--accent); color: var(--accent); }
-.bg-dir.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.bg-dir:hover {
+  border-color: var(--hover-border);
+  color: var(--hover-fg);
+}
+.bg-dir.active {
+  background: var(--btn-primary-bg);
+  border-color: transparent;
+  color: var(--btn-primary-fg);
+}
 .bg-effect-select {
   height: 30px;
   padding: 0 8px;
   border: 1px solid var(--btn-border);
-  border-radius: 6px;
+  border-radius: var(--r-sm);
   background: var(--btn-bg);
   color: var(--text-1);
   font-size: 13px;
   cursor: pointer;
 }
-.bg-effect-select:focus { outline: none; border-color: var(--accent); }
+.bg-effect-select:focus {
+  outline: none;
+  border-color: var(--focus-ring);
+}
 .bg-actions {
   display: flex;
   flex-wrap: wrap;
@@ -1645,7 +2436,7 @@ body.is-dragging .cascade-heading { cursor: grabbing; }
   align-items: center;
   height: 18px;
   padding: 0 7px;
-  border-radius: 5px;
+  border-radius: var(--r-xs);
   background: var(--accent-soft);
   color: var(--accent-strong);
   font-size: 11px;
@@ -1654,7 +2445,7 @@ body.is-dragging .cascade-heading { cursor: grabbing; }
   white-space: nowrap;
   flex: 0 0 auto;
 }
-body[data-theme="dark"] .tag-chip { background: rgba(129, 140, 248, 0.2); }
+body[data-theme="dark"] .tag-chip { background: rgba(148, 163, 184, 0.22); }
 
 /* ============================== 搜索 ============================== */
 .search-result .sr-main { flex: 0 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
@@ -1685,7 +2476,7 @@ body[data-theme="dark"] .tag-chip { background: rgba(129, 140, 248, 0.2); }
   background: var(--panel-bg);
   backdrop-filter: blur(26px) saturate(1.12);
   border-left: 1px solid var(--glass-border);
-  box-shadow: -18px 0 54px rgba(67, 74, 148, 0.18), inset 1px 0 0 rgba(255, 255, 255, 0.5);
+  box-shadow: -18px 0 54px rgba(30, 41, 59, 0.16), inset 1px 0 0 rgba(255, 255, 255, 0.5);
   overflow-y: auto;
 }
 body[data-theme="dark"] .detail-drawer {
@@ -1713,7 +2504,7 @@ body[data-theme="dark"] .detail-drawer {
   flex: 0 0 auto;
   width: 36px;
   height: 36px;
-  border-radius: 10px;
+  border-radius: var(--r-md);
   display: grid;
   place-items: center;
   overflow: hidden;
@@ -1736,7 +2527,7 @@ body[data-theme="dark"] .detail-drawer {
   width: 100%;
   box-sizing: border-box;
   border: 1px solid var(--accent);
-  border-radius: 8px;
+  border-radius: var(--r-md);
   background: var(--surface);
   color: var(--text);
   font-size: 13px;
@@ -1753,16 +2544,16 @@ body[data-theme="dark"] .detail-drawer {
   gap: 8px;
   margin-bottom: 14px;
   padding: 8px 10px;
-  border-radius: 8px;
+  border-radius: var(--r-md);
   background: var(--btn-bg);
   border: 1px solid transparent;
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
+  transition: border-color 0.2s, background 0.2s;
 }
 .dd-url:hover,
 .dd-url:focus-visible {
   border-color: var(--btn-border);
-  background: var(--chip-hover);
+  background: var(--hover-bg-solid);
   outline: none;
 }
 .dd-url-text {
@@ -1775,8 +2566,11 @@ body[data-theme="dark"] .detail-drawer {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.dd-url-copy { flex: 0 0 auto; color: var(--text-3); opacity: 0.55; transition: color 0.15s, opacity 0.15s; }
-.dd-url:hover .dd-url-copy { opacity: 1; color: var(--accent); }
+.dd-url-copy { flex: 0 0 auto; color: var(--text-3); opacity: 0.55; transition: color 0.2s, opacity 0.2s; }
+.dd-url:hover .dd-url-copy {
+  opacity: 1;
+  color: var(--hover-fg);
+}
 
 .dd-meta {
   display: grid;
@@ -1789,7 +2583,7 @@ body[data-theme="dark"] .detail-drawer {
   flex-direction: column;
   gap: 4px;
   padding: 9px 11px;
-  border-radius: 9px;
+  border-radius: var(--r-md);
   background: var(--btn-bg);
   min-width: 0;
 }
@@ -1832,14 +2626,14 @@ body[data-theme="dark"] .detail-drawer {
   width: 100%;
   box-sizing: border-box;
   border: 1px solid var(--btn-border);
-  border-radius: 9px;
+  border-radius: var(--r-md);
   background: var(--surface);
   color: var(--text);
   font-size: 13px;
   font-family: inherit;
   padding: 9px 11px;
   box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.05);
-  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 .dd-textarea { resize: vertical; min-height: 96px; line-height: 1.55; }
 .dd-input { height: 36px; }
@@ -1850,8 +2644,8 @@ body[data-theme="dark"] .detail-drawer {
 .dd-textarea:focus,
 .dd-input:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft), inset 0 1px 2px rgba(15, 23, 42, 0.04);
+  border-color: var(--focus-ring);
+  box-shadow: 0 0 0 3px var(--sel-bg), inset 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 body[data-theme="dark"] .dd-textarea,
 body[data-theme="dark"] .dd-input { box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4); }
@@ -1863,7 +2657,7 @@ body[data-theme="dark"] .dd-input { box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.
   color: var(--text-3);
   background: var(--btn-bg);
   padding: 1px 8px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
 }
 .dd-related-list {
   display: flex;
@@ -1879,17 +2673,17 @@ body[data-theme="dark"] .dd-input { box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.
   width: 100%;
   padding: 6px 8px;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: var(--r-md);
   background: transparent;
   color: var(--text);
   font-size: 12.5px;
   font-family: inherit;
   cursor: pointer;
   text-align: left;
-  transition: background 0.14s, border-color 0.14s;
+  transition: background 0.2s, border-color 0.2s;
 }
 .dd-related-item:hover {
-  background: var(--chip-hover);
+  background: var(--hover-bg-solid);
   border-color: var(--btn-border);
 }
 .dd-rel-avatar {
@@ -1897,7 +2691,7 @@ body[data-theme="dark"] .dd-input { box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.
   flex: 0 0 auto;
   width: 20px;
   height: 20px;
-  border-radius: 5px;
+  border-radius: var(--r-xs);
   overflow: hidden;
   background: var(--btn-bg);
 }
@@ -1946,10 +2740,10 @@ body[data-theme="dark"] .dd-input { box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.
   font-weight: 600;
   cursor: pointer;
   padding: 2px 5px;
-  border-radius: 5px;
-  transition: background 0.15s, color 0.15s;
+  border-radius: var(--r-xs);
+  transition: background 0.2s, color 0.2s;
 }
-.dd-auto:hover { background: var(--accent-soft); }
+.dd-auto:hover {background: var(--hover-bg-solid-strong);}
 .dd-auto:disabled { opacity: 0.5; cursor: default; }
 .dd-auto .spinning { animation: dd-spin 0.8s linear infinite; }
 @keyframes dd-spin { to { transform: rotate(360deg); } }
@@ -2013,7 +2807,7 @@ body[data-theme="dark"] .dd-input { box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.
 .icon-picker {
   width: 420px;
   max-width: calc(100vw - 40px);
-  border-radius: 16px;
+  border-radius: var(--r-xl);
   background: var(--panel-bg);
   backdrop-filter: blur(24px);
   border: 1px solid var(--glass-border);
@@ -2037,24 +2831,23 @@ body[data-theme="dark"] .dd-input { box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.
 }
 .icon-opt {
   height: 42px;
-  border-radius: 8px;
+  border-radius: var(--r-md);
   border: 1px solid var(--btn-border);
   background: var(--surface);
   color: var(--text-2);
   cursor: pointer;
   display: grid;
   place-items: center;
-  transition: transform 0.12s, border-color 0.12s, background 0.12s, color 0.12s;
+  transition: transform 0.2s, border-color 0.2s, background 0.2s, color 0.2s;
 }
 .icon-opt:hover {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-  transform: scale(1.08);
+  border-color: var(--hover-border);
+  background: var(--hover-bg-solid);
 }
 .icon-opt.active {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-  color: var(--accent);
+  border-color: var(--focus-ring);
+  background: var(--sel-bg);
+  color: var(--text);
 }
 .icon-picker-label {
   font-size: 11px;
@@ -2076,9 +2869,9 @@ body[data-theme="dark"] .dd-input { box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.
   border: 2px solid transparent;
   cursor: pointer;
   padding: 0;
-  transition: transform 0.12s, border-color 0.12s;
+  transition: transform 0.2s, border-color 0.2s;
 }
-.icon-color-dot:hover { transform: scale(1.12); }
+.icon-color-dot:hover {box-shadow: 0 0 0 2px var(--hover-border);}
 .icon-color-dot.active {
   border-color: var(--text);
   box-shadow: 0 0 0 2px var(--surface);
@@ -2090,12 +2883,12 @@ body[data-theme="dark"] .dd-input { box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.
   font-size: 12px;
   padding: 0 10px;
   height: 24px;
-  border-radius: 12px;
+  border-radius: var(--r-lg);
   cursor: pointer;
 }
 .icon-color-default.active {
-  border-color: var(--accent);
-  color: var(--accent);
+  border-color: var(--focus-ring);
+  color: var(--text);
 }
 .icon-picker-foot {
   display: flex;
@@ -2113,11 +2906,11 @@ body[data-theme="dark"] .dd-input { box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
   color: #fff;
   cursor: grab;
   box-shadow:
-    0 10px 28px rgba(99, 102, 241, 0.45),
+    0 10px 28px rgba(30, 41, 59, 0.32),
     0 2px 6px rgba(30, 41, 59, 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.35),
     inset 0 -6px 12px rgba(0, 0, 0, 0.12);
@@ -2131,12 +2924,12 @@ body[data-theme="dark"] .dd-input { box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.
 .memo-ball:hover {
   transform: scale(1.08);
   box-shadow:
-    0 14px 36px rgba(99, 102, 241, 0.55),
+    0 14px 36px rgba(30, 41, 59, 0.36),
     0 3px 8px rgba(30, 41, 59, 0.14),
     inset 0 1px 0 rgba(255, 255, 255, 0.35),
     inset 0 -6px 12px rgba(0, 0, 0, 0.14);
 }
-.memo-ball:active { cursor: grabbing; transform: scale(0.96); }
+.memo-ball:active {cursor: grabbing;}
 .memo-ball-badge {
   position: absolute;
   top: -4px;
@@ -2144,7 +2937,7 @@ body[data-theme="dark"] .dd-input { box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.
   min-width: 18px;
   height: 18px;
   padding: 0 5px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: #ef4444;
   color: #fff;
   font-size: 11px;
@@ -2161,7 +2954,7 @@ body[data-theme="dark"] .dd-input { box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.
   position: fixed;
   z-index: 720;
   width: 364px;
-  border-radius: 16px;
+  border-radius: var(--r-xl);
   background: var(--panel-bg);
   backdrop-filter: blur(24px) saturate(1.4);
   border: 1px solid var(--glass-border);
@@ -2192,10 +2985,10 @@ body[data-theme="dark"] .dd-input { box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.
   padding: 8px 10px;
 }
 .memo-todo-item {
-  border-radius: 8px;
-  transition: background 0.14s;
+  border-radius: var(--r-md);
+  transition: background 0.2s;
 }
-.memo-todo-item:hover { background: var(--chip-hover); }
+.memo-todo-item:hover {background: var(--hover-bg-solid);}
 .memo-todo-item:hover .memo-del { opacity: 1; }
 .memo-todo-item.done .memo-todo-title { text-decoration: line-through; color: var(--text-3); }
 .memo-todo-row {
@@ -2208,7 +3001,7 @@ body[data-theme="dark"] .dd-input { box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.
   flex: 0 0 auto;
   width: 20px;
   height: 20px;
-  border-radius: 6px;
+  border-radius: var(--r-sm);
   border: 1.5px solid var(--btn-border);
   background: transparent;
   color: var(--text);
@@ -2217,8 +3010,15 @@ body[data-theme="dark"] .dd-input { box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.
   cursor: pointer;
   padding: 0;
 }
-.memo-check:hover { border-color: var(--accent); color: var(--accent); }
-.memo-todo-item.done .memo-check { background: var(--accent); border-color: var(--accent); color: #fff; }
+.memo-check:hover {
+  border-color: var(--hover-border);
+  color: var(--text);
+}
+.memo-todo-item.done .memo-check {
+  background: var(--sel-bg-strong);
+  border-color: var(--focus-ring);
+  color: var(--text);
+}
 .memo-todo-title {
   flex: 1;
   min-width: 0;
@@ -2238,14 +3038,14 @@ body[data-theme="dark"] .dd-input { box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.
   border: none;
   background: transparent;
   color: var(--text-3);
-  border-radius: 6px;
+  border-radius: var(--r-sm);
   cursor: pointer;
   opacity: 0;
   display: grid;
   place-items: center;
-  transition: opacity 0.14s, color 0.14s, background 0.14s;
+  transition: opacity 0.2s, color 0.2s, background 0.2s;
 }
-.memo-del:hover { color: var(--danger); background: rgba(239, 68, 68, 0.12); }
+.memo-del:hover { color: var(--danger); background: var(--danger-soft); }
 .memo-todo-count {
   flex: none;
   font-size: 11px;
@@ -2254,7 +3054,7 @@ body[data-theme="dark"] .dd-input { box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.
   background: var(--accent-soft);
   color: var(--accent);
   padding: 2px 8px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
 }
 .memo-todo-add {
   display: flex;
@@ -2267,18 +3067,22 @@ body[data-theme="dark"] .dd-input { box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.
   height: 36px;
   padding: 0 12px;
   border: 1px solid var(--btn-border);
-  border-radius: 8px;
+  border-radius: var(--r-md);
   background: var(--surface);
   color: var(--text);
   font-size: 13px;
   font-family: inherit;
 }
-.memo-todo-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.memo-todo-input:focus {
+  outline: none;
+  border-color: var(--focus-ring);
+  box-shadow: 0 0 0 3px var(--sel-bg);
+}
 .memo-todo-add-btn {
   flex: 0 0 auto;
   width: 36px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--r-md);
   background: var(--btn-primary-bg);
   color: var(--btn-primary-fg);
   font-size: 18px;
@@ -2302,12 +3106,18 @@ body[data-theme="dark"] .dd-input { box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.
   font-size: 12px;
   font-weight: 600;
   padding: 5px 10px;
-  border-radius: 7px;
+  border-radius: var(--r-sm);
   cursor: pointer;
   white-space: nowrap;
 }
-.memo-filter-tabs button:hover { background: var(--chip-hover); color: var(--text); }
-.memo-filter-tabs button.active { background: var(--accent); color: #fff; }
+.memo-filter-tabs button:hover {
+  background: var(--hover-bg-solid);
+  color: var(--text);
+}
+.memo-filter-tabs button.active {
+  background: var(--sel-bg-strong);
+  color: var(--text);
+}
 
 .memo-progress {
   display: flex;
@@ -2320,7 +3130,7 @@ body[data-theme="dark"] .dd-input { box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.
   flex: 1;
   height: 6px;
   border-radius: 3px;
-  background: var(--chip-hover);
+  background: rgba(148, 163, 184, 0.22);
   overflow: hidden;
 }
 .memo-progress-fill {
@@ -2355,16 +3165,16 @@ body[data-theme="dark"] .dd-input { box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.
   border: none;
   padding: 0;
   cursor: pointer;
-  transition: transform 0.12s;
+  transition: transform 0.2s;
 }
-.memo-priority-dot:hover { transform: scale(1.25); box-shadow: 0 0 0 3px var(--accent-soft); }
+.memo-priority-dot:hover {box-shadow: 0 0 0 3px var(--sel-bg);}
 
 .memo-tag-chip {
   flex: 0 0 auto;
   font-size: 11px;
   font-weight: 600;
   padding: 2px 7px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--accent-soft);
   color: var(--accent);
   white-space: nowrap;
@@ -2384,7 +3194,7 @@ body[data-theme="dark"] .dd-input { box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.
   border: none;
   background: transparent;
   color: var(--text-3);
-  border-radius: 6px;
+  border-radius: var(--r-sm);
   cursor: pointer;
   display: grid;
   place-items: center;
@@ -2407,14 +3217,17 @@ body[data-theme="dark"] .dd-input { box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.
   min-height: 52px;
   padding: 8px 10px;
   border: 1px solid var(--btn-border);
-  border-radius: 8px;
+  border-radius: var(--r-md);
   background: var(--surface);
   color: var(--text);
   font-size: 13px;
   font-family: inherit;
   resize: vertical;
 }
-.memo-detail-body:focus { outline: none; border-color: var(--accent); }
+.memo-detail-body:focus {
+  outline: none;
+  border-color: var(--focus-ring);
+}
 .memo-detail-row {
   display: flex;
   align-items: center;
@@ -2429,14 +3242,14 @@ body[data-theme="dark"] .dd-input { box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.
   align-items: center;
   gap: 8px;
   padding: 4px 6px;
-  border-radius: 6px;
+  border-radius: var(--r-sm);
 }
-.memo-sub-item:hover { background: var(--chip-hover); }
+.memo-sub-item:hover {background: var(--hover-bg-solid);}
 .memo-sub-check {
   flex: 0 0 auto;
   width: 16px;
   height: 16px;
-  border-radius: 5px;
+  border-radius: var(--r-xs);
   border: 1.5px solid var(--btn-border);
   background: transparent;
   color: var(--text);
@@ -2464,7 +3277,7 @@ body[data-theme="dark"] .dd-input { box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.
   border: none;
   background: transparent;
   color: var(--text-3);
-  border-radius: 5px;
+  border-radius: var(--r-xs);
   cursor: pointer;
   display: grid;
   place-items: center;
@@ -2475,3 +3288,30 @@ body[data-theme="dark"] .dd-input { box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.
 .memo-sub-add { display: flex; gap: 6px; }
 .memo-sub-add .memo-todo-input { height: 30px; }
 .memo-sub-add .memo-todo-add-btn { width: 30px; height: 30px; font-size: 15px; }
+
+
+/* ============================== 交互态约定 ==============================
+   hover / active 只用两件事表达：**底色**（--hover-bg / --active-bg）和**文字明度**
+   （--hover-fg）。不再把文字染成强调色，也不再用 transform: scale() 做按压
+   —— 缩放会让整个列表在你指尖下"抖一下"。两套主题各有一份令牌值：
+     hover 底：浅色压暗一点（rgba(15,23,42,.055)）／深色提亮一点（rgba(226,232,240,.075)）
+     active 底：同样方向再深/再亮一档
+     文字：浅色更黑、深色更白，色相不变
+   下面这些是"按下"反馈，和上面的 hover 配套。 */
+.sf-row:active,
+.ws-row:active,
+.ws-tab:active,
+.recent-item:active,
+.freq-item:active,
+.search-result:active,
+.grid-more:active,
+.link-btn:active,
+.section-head .link-btn:active {
+  background: var(--active-bg);
+}
+.bookmark-item:active {
+  background: var(--active-bg);
+  box-shadow: var(--hover-shadow);
+}
+.context-menu-item:active {background: var(--active-bg-solid);}
+.panel-act--text:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }

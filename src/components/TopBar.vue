@@ -1,7 +1,18 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { store, toggleAllFolders, isAllCollapsed, toggleTheme, cycleLayoutMode, toast } from '../store.js'
 import { dialogNewBookmark, dialogNewFolder } from '../ui.js'
+
+// 显示真实版本号：改了代码但没在 chrome://extensions 刷新时，这里一眼就能看出来
+const version = ref('5.1')
+onMounted(() => {
+  try {
+    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest) {
+      const v = chrome.runtime.getManifest().version
+      if (v) version.value = v.split('.').slice(0, 2).join('.')
+    }
+  } catch { /* ignore */ }
+})
 
 const trashCount = computed(() => store.trash.length)
 const allCollapsed = computed(() => isAllCollapsed())
@@ -59,7 +70,7 @@ function onSearchEnter() {
           </svg>
         </span>
         <span class="brand-name">书签板</span>
-        <span class="brand-ver">v5.0</span>
+        <span class="brand-ver">v{{ version }}</span>
       </div>
 
       <div class="search-box">

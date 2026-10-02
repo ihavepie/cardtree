@@ -3,7 +3,8 @@
 import {
   store, nodeById, createBookmark, createFolder, renameNode, moveTo,
   trashNodes, clearSelection, selectedNodes, topLevelSelection, toggleCollapse, isCollapsed,
-  recordOpen, toast, setMeta,
+  recordOpen, toast, setMeta, selectedBookmarkNodes, createWorkspace, renameWorkspace,
+  deleteWorkspace, openWorkspace, toggleWorkspaceExpand,
 } from './store.js'
 import { isFolder } from './utils.js'
 
@@ -148,6 +149,64 @@ export function dialogRename(node) {
       toast('已保存')
     },
   })
+}
+
+// ---------------------------------------------------------------- 工作区
+export function dialogNewWorkspace() {
+  const picked = selectedBookmarkNodes()
+  openDialog({
+    title: '新建工作区',
+    submitLabel: '创建',
+    note: picked.length
+      ? `会把当前选中的 ${picked.length} 个书签放进去。之后选中别的书签，点工作区右侧的「＋」可以继续添加。`
+      : '现在没有选中书签，先建一个空工作区也行：之后选中书签，点工作区右侧的「＋」加进来。',
+    fields: [
+      { key: 'name', label: '名称', type: 'text', value: '', placeholder: '例如：开始工作 / 查资料', required: true },
+    ],
+    async onSubmit(values) {
+      const ws = createWorkspace(values.name, picked)
+      toast(picked.length ? `已创建「${ws.name}」（${picked.length} 项）` : `已创建「${ws.name}」`)
+    },
+  })
+}
+
+export function dialogRenameWorkspace(ws) {
+  openDialog({
+    title: '重命名工作区',
+    submitLabel: '保存',
+    fields: [
+      { key: 'name', label: '名称', type: 'text', value: ws.name, required: true },
+    ],
+    async onSubmit(values) {
+      renameWorkspace(ws.id, values.name)
+      toast('已保存')
+    },
+  })
+}
+
+export function dialogDeleteWorkspace(ws) {
+  openDialog({
+    title: '删除工作区',
+    submitLabel: '删除',
+    note: `「${ws.name}」里有 ${ws.items.length} 个网站。删除只影响这个工作区，不会动你的书签。`,
+    fields: [],
+    async onSubmit() {
+      deleteWorkspace(ws.id)
+      toast(`已删除「${ws.name}」`)
+    },
+  })
+}
+
+/** 工作区行右侧「⋯」的小菜单（右键同一份） */
+export function menuForWorkspace(ws, x, y) {
+  const expanded = store.wsExpanded.has(ws.id)
+  openMenu(x, y, [
+    item('立即打开全部', () => openWorkspace(ws.id), { icon: 'external' }),
+    item(expanded ? '收起标签页' : '展开标签页', () => toggleWorkspaceExpand(ws.id), { icon: 'list' }),
+    { separator: true },
+    item('重命名', () => dialogRenameWorkspace(ws), { icon: 'edit' }),
+    item('删除工作区', () => dialogDeleteWorkspace(ws), { icon: 'trash', danger: true }),
+  ])
 }
 
 export function dialogEditBookmark(node) {

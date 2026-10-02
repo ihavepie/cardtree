@@ -106,6 +106,49 @@ try {
   const report = {};
   report['1_无标签时'] = await ev(SNAPSHOT);
 
+  // 侧边栏分工：开着 → 不重复列文件夹（只剩标签组，没标签时整条不出现）；收起 → 接管文件夹跳转
+  report['0_分工'] = {
+    侧边栏开着: {
+      hasIndex: await ev(`!!document.querySelector('.board-index')`),
+      分组: await ev(`[...document.querySelectorAll('.board-index .idx-group')].map(g => g.querySelector('.idx-label')?.textContent)`),
+    },
+    侧边栏收起: await ev(`(async () => {
+      window.__store.sidebarOpen = false;
+      await new Promise(r => setTimeout(r, 400));
+      const out = {
+        分组: [...document.querySelectorAll('.board-index .idx-group')].map(g => g.querySelector('.idx-label')?.textContent),
+        文件夹胶囊: [...document.querySelectorAll('.board-index .idx-group')].find(g => g.querySelector('.idx-label')?.textContent === '文件夹')?.querySelectorAll('.idx-chip').length ?? 0,
+      };
+      window.__store.sidebarOpen = true;
+      await new Promise(r => setTimeout(r, 300));
+      return out;
+    })()`),
+  };
+
+  // 侧边栏收起时主区更宽：并排模式能多放一栏
+  report['0_收起侧边栏的宽度收益'] = await ev(`(async () => {
+    const s = window.__store;
+    const before = { mode: s.layoutMode };
+    s.layoutMode = 'columns';
+    await new Promise(r => setTimeout(r, 400));
+    const measure = () => {
+      const card = document.querySelector('.root-card');
+      const nodes = [...document.querySelectorAll('.root-card > .cascade-children > .cascade-node')];
+      const lefts = [...new Set(nodes.map(n => Math.round(n.getBoundingClientRect().left)))];
+      return { 卡片宽: Math.round(card.getBoundingClientRect().width), 文件夹栏数: lefts.length };
+    };
+    s.sidebarOpen = true;
+    await new Promise(r => setTimeout(r, 400));
+    const withSidebar = measure();
+    s.sidebarOpen = false;
+    await new Promise(r => setTimeout(r, 500));
+    const withoutSidebar = measure();
+    s.sidebarOpen = true;
+    s.layoutMode = before.mode;
+    await new Promise(r => setTimeout(r, 400));
+    return { 侧边栏开着: withSidebar, 侧边栏收起: withoutSidebar };
+  })()`);
+
   // 给几个书签打标签：GitHub→开发, Vue.js→开发, MDN 文档→文档；再用一个不存在的标签做空态
   await ev(`(async () => {
     const s = window.__store;
@@ -157,21 +200,28 @@ try {
   await ev(`window.__store.tagFilter = ''`);
 
   // 文件夹索引条：点「前端开发」应展开并定位（focusId + 展开）
+  // 注意：文件夹胶囊按分工设计只在侧边栏收起时出现（App.vue 的 showFolderChips），
+  // 所以这里必须先收起侧边栏，否则根本找不到胶囊 —— 步骤结束再还原。
   await ev(`(async () => { window.__store.collapsed = new Set(); await new Promise(r => setTimeout(r, 300)); return true })()`);
   const folderJump = await ev(`(async () => {
+    window.__store.sidebarOpen = false;
+    await new Promise(r => setTimeout(r, 400));
     const chip = [...document.querySelectorAll('.board-index .idx-chip')].find(c => c.textContent.trim().startsWith('前端开发'));
-    if (!chip) return { err: '索引条里没有 前端开发' };
+    if (!chip) { window.__store.sidebarOpen = true; return { err: '索引条里没有 前端开发' }; }
     window.__store.collapsed.add('f-dev');            // 先折叠，验证点击会展开
     await new Promise(r => setTimeout(r, 300));
     const before = { collapsed: window.__store.collapsed.has('f-dev'), focus: window.__store.focusId };
     chip.click();
     await new Promise(r => setTimeout(r, 600));
     const el = document.querySelector('.main [data-id="f-dev"]');
-    return {
+    const out = {
       before,
       after: { collapsed: window.__store.collapsed.has('f-dev'), focus: window.__store.focusId, found: !!el },
       bodyVisible: el ? Math.round(el.getBoundingClientRect().height) > 0 : null,
     };
+    window.__store.sidebarOpen = true;
+    await new Promise(r => setTimeout(r, 300));
+    return out;
   })()`);
   report['6_文件夹跳转'] = folderJump;
   await shot('04-jump');

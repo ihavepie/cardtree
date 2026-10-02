@@ -45,6 +45,7 @@ async function submit() {
     <div class="modal" role="dialog" aria-modal="true">
       <div class="modal-head">{{ store.dialog.title }}</div>
       <div class="modal-body">
+        <p v-if="store.dialog.note" class="modal-note">{{ store.dialog.note }}</p>
         <div v-for="f in store.dialog.fields" :key="f.key" class="field">
           <label class="field-label">{{ f.label }}</label>
 

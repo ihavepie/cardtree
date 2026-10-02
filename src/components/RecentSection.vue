@@ -4,6 +4,7 @@ import { store, clearRecent } from '../store.js'
 import { faviconUrl } from '../utils.js'
 import Icon from './Icon.vue'
 
+// 「书签栏」卡片内的一个分组：标题 + 条目 + 清除
 const errors = reactive(new Set())
 
 function openItem(r) {
