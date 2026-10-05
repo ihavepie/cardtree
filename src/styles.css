@@ -208,7 +208,7 @@ body[data-theme="dark"] .search-input {
 }
 body[data-theme="dark"] .search-input:focus {
   border-color: var(--focus-ring);
-  box-shadow: 0 0 0 4px var(--hover-bg-strong);
+  box-shadow: 0 0 0 4px var(--accent-soft);
 }
 body[data-theme="dark"] .search-box .search-clear {
   background: rgba(148, 163, 184, 0.16);
@@ -449,7 +449,7 @@ body.is-resizing-sidebar .sidebar { transition: none; }
 .search-input::placeholder { color: var(--text-3); }
 .search-input:focus {
   border-color: var(--focus-ring);
-  box-shadow: 0 0 0 4px var(--hover-bg-strong), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  box-shadow: 0 0 0 4px var(--accent-soft), inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 .search-box .search-clear {
   position: absolute;
@@ -1380,7 +1380,7 @@ button.sf-chev:hover { background: var(--hover-bg); color: var(--hover-fg); }
 .root-card.drop-inside {
   border-color: var(--focus-ring);
   background: var(--sel-bg);
-  box-shadow: 0 0 0 4px var(--hover-bg-strong), var(--shadow);
+  box-shadow: 0 0 0 4px var(--sel-bg), var(--shadow);
 }
 .root-card.selected {
   background: var(--sel-folder);
@@ -1402,9 +1402,12 @@ button.sf-chev:hover { background: var(--hover-bg); color: var(--hover-fg); }
   background: var(--sel-bg);
   border-color: var(--focus-ring);
 }
+/* 「当前定位到的那张卡」是**常驻**标记，不是悬停：用主题色淡淡一层 + 一条中性描边。
+   ⚠️ 这里曾经借用 hover 的底色 —— 语义不对，而且浅色下 hover 底色已经是白色高光，
+   于是取消选中之后会在主卡片上留下一块白印子（用户报的就是这个 bug）。 */
 .cascade-card.focused {
-  background: var(--hover-bg);
-  border-color: var(--hover-border);
+  background: var(--accent-soft);
+  border-color: var(--btn-border);
 }
 .cascade-card.selected {
   background: var(--sel-folder);

@@ -467,6 +467,9 @@ export function selectedNodes() {
 export function clearSelection() {
   store.selection.clear()
   store.anchorId = null
+  // 定位高亮（主卡片上的 .focused）也要一起撤掉：它跟着 focusId 走，而侧栏"单击 = 选中 + 定位"
+  // 会顺手把 focusId 设上 —— 以前只清 selection，于是取消选中后主卡片上还留着一块高亮（白印子）。
+  store.focusId = null
 }
 
 // 用一批 id 直接替换当前选中（用于框选）

@@ -23,7 +23,8 @@ try {
   let id=0;const pending=new Map();
   ws.onmessage=(ev)=>{const m=JSON.parse(ev.data);if(m.method==='Runtime.exceptionThrown')console.log('EXC',m.params.exceptionDetails?.exception?.description||'');if(m.id&&pending.has(m.id)){pending.get(m.id)(m);pending.delete(m.id);}};
   const send=(method,params={})=>new Promise((res,rej)=>{const i=++id;pending.set(i,m=>m.error?rej(new Error(m.error.message)):res(m.result));ws.send(JSON.stringify({id:i,method,params}));});
-  const ev=async e=>(await send('Runtime.evaluate',{expression:e,awaitPromise:true,returnByValue:true})).result.value;
+  // 页面里的异常要暴露出来，否则 e.result.value 只是 undefined，问题会被吞掉
+  const ev=async e=>{const r=await send('Runtime.evaluate',{expression:e,awaitPromise:true,returnByValue:true});if(r.exceptionDetails)throw new Error('页面异常: '+(r.exceptionDetails.exception?.description||r.exceptionDetails.text));return r.result.value};
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   await send('Page.enable');await send('Runtime.enable');
   await send('Page.navigate',{url:'http://localhost:5199/'});
@@ -50,7 +51,35 @@ try {
     sfUi: [...document.querySelectorAll('.sf-row')].find(r => r.querySelector('.sf-name')?.textContent === '组件库').classList.contains('selected'),
   })`);
 
-  console.log(JSON.stringify(result, null, 2));
+  // 取消选中（点主区空白处 → clearSelection）：主卡片上**不该留下任何高亮**
+  const readMark = `(() => {
+    const card = document.querySelector('.main [data-id="f-dev"] .cascade-card');
+    return {
+      focused: document.querySelectorAll('.main .cascade-card.focused').length,
+      selected: document.querySelectorAll('.main .cascade-card.selected').length,
+      bg: card ? getComputedStyle(card).backgroundColor : null,
+      focusId: window.__store.focusId,
+      selectionSize: window.__store.selection.size,
+    };
+  })()`;
+  const marked = await ev(readMark);
+  await ev(`(() => { document.querySelector('.main').dispatchEvent(new MouseEvent('click', { bubbles: true })); return true })()`);
+  await sleep(250);
+  const cleared = await ev(readMark);
+
+  // 选中时的高亮底色必须是"主题色淡层"，不能是白色高光（浅色 --hover-bg = rgba(255,255,255,.5)）
+  const whiteish = (c) => /^rgba?\(255, 255, 255/.test(c);
+
+  console.log(JSON.stringify({
+    ...result,
+    选中时: marked,
+    取消选中后: cleared,
+    选中时确实有高亮: marked.focused === 1 && marked.selected === 1,
+    选中时底色不是白印子: !whiteish(marked.bg || ''),
+    取消选中后没有残留高亮: cleared.focused === 0 && cleared.selected === 0,
+    取消选中后底色透明: /rgba\(0, 0, 0, 0\)/.test(cleared.bg || ''),
+    定位状态被一起清掉: cleared.focusId === null && cleared.selectionSize === 0,
+  }, null, 2));
 } finally {
   try{ws&&ws.close();}catch{}
   try{edge.kill('SIGTERM');}catch{}
