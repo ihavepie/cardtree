@@ -74,7 +74,9 @@ try {
     ...result,
     选中时: marked,
     取消选中后: cleared,
-    选中时确实有高亮: marked.focused === 1 && marked.selected === 1,
+    // 侧栏单击现在**只选中/高亮**（不再 revealNode → 不设 focusId、不展开、不滚动）
+    选中时确实有高亮: marked.selected === 1,
+    侧栏单击不再设定位标记: marked.focused === 0,
     选中时底色不是白印子: !whiteish(marked.bg || ''),
     取消选中后没有残留高亮: cleared.focused === 0 && cleared.selected === 0,
     取消选中后底色透明: /rgba\(0, 0, 0, 0\)/.test(cleared.bg || ''),

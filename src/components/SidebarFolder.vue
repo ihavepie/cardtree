@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { store, isCollapsed, toggleCollapse, select, isTopSelected, revealNode, getFolderIcon, getFolderIconColor, setSidebarFocus } from '../store.js'
+import { store, isCollapsed, toggleCollapse, select, isTopSelected, getFolderIcon, getFolderIconColor, setSidebarFocus } from '../store.js'
 import { FOLDER_ICONS } from '../folder-icons.js'
 import Icon from './Icon.vue'
 import { overSidebarRow, onDrop, endDrag, invalidFolderTarget } from '../drag.js'
@@ -41,7 +41,10 @@ function onClick(e) {
   const ctrl = e.ctrlKey || e.metaKey
   const shift = e.shiftKey
   select(props.node.id, { ctrl, shift })
-  if (!ctrl && !shift) revealNode(props.node.id)
+  // 单击**只选中 / 高亮**，不再 revealNode。
+  // 原来那一步会「展开目标 + 展开所有祖先 + 平滑滚动到视口中间」，于是点一下侧栏
+  // 主卡片的间距就跟着变（实测卡片高度 329 → 371px）、视口也被拖走 —— 用户明确不要这种位移。
+  // 展开 / 收起仍然点左边的箭头（onToggle）；需要在主区定位用顶部索引条的文件夹胶囊。
 }
 
 function onToggle(e) {
