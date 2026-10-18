@@ -81,7 +81,7 @@
   --sel-frame: rgba(100, 116, 139, 0.5);     /* 选中框：淡色中性描边（不带紫） */
 
   /* ===== 状态色 ===== */
-  --card-bg: rgba(255, 255, 255, 0.26);        /* 0.2 → 0.26：卡片更「实」一点，和缝里露出的原始背景色差更小 */
+  --card-bg: rgba(255, 255, 255, 0.2);    /* 回到 v5.3.0 */        /* 0.2 → 0.26：卡片更「实」一点，和缝里露出的原始背景色差更小 */
   --card-border: rgba(255, 255, 255, 0.5);     /* 玻璃边：卡片轮廓立起来，缝才读成「两道边」而不是一条灰带 */
   --row-hover: var(--hover-bg);            /* 兼容旧引用：全站悬停底 */
   --row-selected: var(--sel-bg);
@@ -115,12 +115,11 @@ body {
   color: var(--text);
   font-variant-numeric: tabular-nums;
   /* 中性环境光（原来是两团靛蓝/紫） + 冷灰底，毛玻璃照样通透 */
-  /* 浅色底：整体抬亮一点、少一点灰 —— 卡片之间/周围露出的就是它，
-     底色越接近卡片，缝越不像「脏印子」（这也是「不要填缝」之后的正解） */
+  /* 页面底：回到 v5.3.0 的取值（之前那轮「抬亮/去灰」被用户否决） */
   background:
-    radial-gradient(1100px 560px at 8% -8%, rgba(63, 124, 174, 0.1), transparent 60%),
-    radial-gradient(900px 620px at 100% 0%, rgba(138, 184, 221, 0.14), transparent 58%),
-    linear-gradient(165deg, #f3f6fa 0%, #fafcfe 48%, #f0f4f8 100%);
+    radial-gradient(1100px 560px at 8% -8%, rgba(129, 140, 248, 0.32), transparent 60%),
+    radial-gradient(900px 620px at 100% 0%, rgba(165, 180, 252, 0.22), transparent 58%),
+    linear-gradient(165deg, #eef1f8 0%, #f6f7fb 48%, #eceffa 100%);
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
 }
@@ -132,7 +131,7 @@ body::after {
   inset: 0;
   z-index: 2000;
   pointer-events: none;
-  opacity: 0.022;   /* 噪点 0.035 → 0.022：它叠在缝里会加重「脏」的感觉 */
+  opacity: 0.035;   /* 回到 v5.3.0 */   /* 噪点 0.035 → 0.022：它叠在缝里会加重「脏」的感觉 */
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
@@ -147,7 +146,7 @@ body[data-theme="dark"] {
   --btn-primary-bg: #e2e8f0;
   --btn-primary-hover: #f8fafc;
   --btn-primary-fg: #0f172a;
-  --card-bg: rgba(38, 50, 69, 0.55);           /* 比原来亮一档：深色下卡片与背景的层次更清楚 */
+  --card-bg: rgba(30, 41, 59, 0.5);       /* 回到 v5.3.0 */           /* 比原来亮一档：深色下卡片与背景的层次更清楚 */
   --card-border: rgba(255, 255, 255, 0.07);    /* 深色里的玻璃边：很淡，但足够把卡片从近黑底上「切」出来 */
   /* 深色交互态：方向本来就是"提亮"，和浅色现在的白高光正好同向；
      近实底面板（--panel-bg ≈ 0.95 深色）上同样是提亮，只是幅度小一点 */
@@ -188,9 +187,9 @@ body[data-theme="dark"] {
   --glass-bg-strong: rgba(30, 41, 59, 0.75);
   --glass-border: rgba(255, 255, 255, 0.08);
   background:
-    radial-gradient(1100px 560px at 6% -8%, rgba(63, 124, 174, 0.18), transparent 60%),
-    radial-gradient(900px 620px at 100% -4%, rgba(63, 124, 174, 0.12), transparent 60%),
-    linear-gradient(165deg, #0e1626 0%, #161c26 46%, #0d131c 100%);
+    radial-gradient(1100px 560px at 6% -8%, rgba(99, 102, 241, 0.22), transparent 60%),
+    radial-gradient(900px 620px at 100% -4%, rgba(99, 102, 241, 0.15), transparent 60%),
+    linear-gradient(165deg, #0f172a 0%, #151b2c 46%, #101623 100%);
 }
 
 /* 深色下需要单独覆盖的组件 */
