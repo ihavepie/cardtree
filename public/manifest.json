@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "书签板",
-  "version": "5.1.0",
+  "version": "5.4.0",
   "description": "把新标签页变成书签板：毛玻璃卡片、工作区一键开一组、可拖动分栏、拖拽整理、标签/描述、搜索、回收站。",
   "chrome_url_overrides": {
     "newtab": "index.html"

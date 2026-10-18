@@ -4,7 +4,8 @@ import { store, toggleAllFolders, isAllCollapsed, toggleTheme, cycleLayoutMode, 
 import { dialogNewBookmark, dialogNewFolder } from '../ui.js'
 
 // 显示真实版本号：改了代码但没在 chrome://extensions 刷新时，这里一眼就能看出来
-const version = ref('5.1')
+// 兜底文案：真扩展里会被 chrome.runtime.getManifest().version 覆盖
+const version = ref('5.4')
 onMounted(() => {
   try {
     if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest) {
