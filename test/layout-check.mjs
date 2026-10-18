@@ -1,12 +1,18 @@
 /* 布局校验：确认分区横向多列、搜索横跨全宽 */
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, existsSync} from 'node:fs';
 import { spawn } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 const CDP_HTTP = 'http://127.0.0.1:9227';
 const PAGE_URL = 'http://localhost:5199/';
-const EDGE_BIN = '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge';
+// Edge 可能装在 /Applications 或外置卷；用 EDGE_BIN 可覆盖
+const EDGE_BIN = [
+  process.env.EDGE_BIN,
+  '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+  '/Volumes/TiPlus7100s/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+].filter(Boolean).find((p) => existsSync(p));
+if (!EDGE_BIN) throw new Error('找不到 Microsoft Edge，可用 EDGE_BIN=... 指定');
 
 const profile = mkdtempSync(join(tmpdir(), 'cardtree-layout-'));
 const edge = spawn(EDGE_BIN, [

@@ -1,12 +1,18 @@
 /* 验证：悬浮面板编辑描述/标签、按标签搜索、改名「书签板」、选中不破坏 */
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, existsSync} from 'node:fs';
 import { spawn } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 const CDP = 'http://127.0.0.1:9236';
 const PAGE = 'http://localhost:5175/';
-const EDGE = '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge';
+// Edge 可能装在 /Applications 或外置卷；用 EDGE_BIN 可覆盖
+const EDGE = [
+  process.env.EDGE_BIN,
+  '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+  '/Volumes/TiPlus7100s/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+].filter(Boolean).find((p) => existsSync(p));
+if (!EDGE) throw new Error('找不到 Microsoft Edge，可用 EDGE_BIN=... 指定');
 const profile = mkdtempSync(join(tmpdir(), 'cardtree-meta-'));
 const edge = spawn(EDGE, ['--headless=new','--no-sandbox','--disable-gpu','--no-first-run',`--remote-debugging-port=9236`,`--user-data-dir=${profile}`,'--window-size=1400,1000','about:blank'], { stdio: 'ignore' });
 async function waitHttp(u,t=15000){const t0=Date.now();while(Date.now()-t0<t){try{return await (await fetch(u)).json();}catch{await new Promise(r=>setTimeout(r,250));}}throw new Error('CDP');}
